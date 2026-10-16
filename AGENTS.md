@@ -142,10 +142,8 @@ docker start rfr-mysql
 
 ## 4. Кодстайл Page Objects (rfr-e2e)
 
-> ⚠️ Это краткая выжимка. Полный контракт — в skill `.claude/skills/rfr-page-objects/SKILL.md`.
+> Это краткая выжимка. Полный контракт — в skill `.claude/skills/rfr-page-objects/SKILL.md`.
 > При расхождении приоритет у skill'а.
-
-> Полный контракт — в skill `rfr-page-objects`.
 
 ### Структура пакетов
 - **Page Objects:** `io.student.rangiffler.ui.page`
