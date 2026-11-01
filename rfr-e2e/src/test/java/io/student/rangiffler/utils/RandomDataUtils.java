@@ -13,4 +13,16 @@ public final class RandomDataUtils {
   public static String randomPassword() {
     return "Pass" + UUID.randomUUID().toString().replace("-", "").substring(0, 6) + "!";
   }
+
+  public static String randomFirstName() {
+    return "First" + randomSuffix(8);
+  }
+
+  public static String randomSurname() {
+    return "Surname" + randomSuffix(8);
+  }
+
+  private static String randomSuffix(int length) {
+    return UUID.randomUUID().toString().replace("-", "").substring(0, length);
+  }
 }

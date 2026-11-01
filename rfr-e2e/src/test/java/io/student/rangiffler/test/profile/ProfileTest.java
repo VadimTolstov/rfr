@@ -6,6 +6,7 @@ import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.jupiter.extension.UserExtension;
 import io.student.rangiffler.ui.page.LoginPage;
+import io.student.rangiffler.utils.RandomDataUtils;
 import java.nio.file.Path;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,8 +21,8 @@ public final class ProfileTest {
   @Test
   @DisplayName("Сохранение профиля и чтение данных после перезагрузки")
   void shouldSaveProfileAndReadItAfterReload(@User TestUser user, Page page) throws Exception {
-    String firstName = "Ada";
-    String surname = "Lovelace";
+    String firstName = RandomDataUtils.randomFirstName();
+    String surname = RandomDataUtils.randomSurname();
     Path avatarPath = Path.of(getClass().getResource("/profile/avatar-saved.jpg").toURI());
 
     new LoginPage(page)
@@ -45,8 +46,10 @@ public final class ProfileTest {
   @Test
   @DisplayName("Сброс изменений возвращает сохранённые значения профиля")
   void shouldResetProfileToSavedValues(@User TestUser user, Page page) throws Exception {
-    String savedFirstName = "Grace";
-    String savedSurname = "Hopper";
+    String savedFirstName = RandomDataUtils.randomFirstName();
+    String savedSurname = RandomDataUtils.randomSurname();
+    String unsavedFirstName = RandomDataUtils.randomFirstName();
+    String unsavedSurname = RandomDataUtils.randomSurname();
     Path savedAvatar = Path.of(getClass().getResource("/profile/avatar-saved.jpg").toURI());
     Path changedAvatar = Path.of(getClass().getResource("/profile/avatar-changed.png").toURI());
 
@@ -61,7 +64,7 @@ public final class ProfileTest {
         .uploadAvatar(savedAvatar)
         .clickSave()
         .reload()
-        .fillProfileForm("Unsaved", "Changes")
+        .fillProfileForm(unsavedFirstName, unsavedSurname)
         .selectLocation("Germany")
         .uploadAvatar(changedAvatar)
         .clickReset()
