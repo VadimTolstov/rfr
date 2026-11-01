@@ -19,7 +19,7 @@ public final class PageFixture implements BeforeEachCallback, AfterEachCallback,
   public void beforeEach(ExtensionContext context) {
     playwright = Playwright.create();
     browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-    page = browser.newPage();
+    page = browser.newPage(new Browser.NewPageOptions().setLocale("en-US"));
   }
 
   @Override

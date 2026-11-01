@@ -1,0 +1,73 @@
+package io.student.rangiffler.test.profile;
+
+import com.microsoft.playwright.Page;
+import io.student.rangiffler.config.PageFixture;
+import io.student.rangiffler.data.TestUser;
+import io.student.rangiffler.jupiter.annotation.User;
+import io.student.rangiffler.jupiter.extension.UserExtension;
+import io.student.rangiffler.ui.page.LoginPage;
+import java.nio.file.Path;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+@ExtendWith(PageFixture.class)
+public final class ProfileTest {
+  @RegisterExtension
+  static final UserExtension USER_EXTENSION = new UserExtension();
+
+  @Test
+  @DisplayName("Сохранение профиля и чтение данных после перезагрузки")
+  void shouldSaveProfileAndReadItAfterReload(@User TestUser user, Page page) throws Exception {
+    String firstName = "Ada";
+    String surname = "Lovelace";
+    Path avatarPath = Path.of(getClass().getResource("/profile/avatar-saved.jpg").toURI());
+
+    new LoginPage(page)
+        .open()
+        .clickLogin()
+        .fillLoginForm(user.username(), user.password())
+        .clickSignIn()
+        .clickProfile()
+        .fillProfileForm(firstName, surname)
+        .selectLocation("France")
+        .uploadAvatar(avatarPath)
+        .clickSave()
+        .reload()
+        .checkThatFirstName(firstName)
+        .checkThatSurname(surname)
+        .checkThatLocation("France")
+        .checkThatAvatarIsDisplayed()
+        .checkThatAvatarMatches(avatarPath);
+  }
+
+  @Test
+  @DisplayName("Сброс изменений возвращает сохранённые значения профиля")
+  void shouldResetProfileToSavedValues(@User TestUser user, Page page) throws Exception {
+    String savedFirstName = "Grace";
+    String savedSurname = "Hopper";
+    Path savedAvatar = Path.of(getClass().getResource("/profile/avatar-saved.jpg").toURI());
+    Path changedAvatar = Path.of(getClass().getResource("/profile/avatar-changed.png").toURI());
+
+    new LoginPage(page)
+        .open()
+        .clickLogin()
+        .fillLoginForm(user.username(), user.password())
+        .clickSignIn()
+        .clickProfile()
+        .fillProfileForm(savedFirstName, savedSurname)
+        .selectLocation("France")
+        .uploadAvatar(savedAvatar)
+        .clickSave()
+        .reload()
+        .fillProfileForm("Unsaved", "Changes")
+        .selectLocation("Germany")
+        .uploadAvatar(changedAvatar)
+        .clickReset()
+        .checkThatFirstName(savedFirstName)
+        .checkThatSurname(savedSurname)
+        .checkThatLocation("France")
+        .checkThatAvatarMatches(savedAvatar);
+  }
+}
