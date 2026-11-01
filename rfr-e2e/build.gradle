@@ -27,6 +27,9 @@ dependencies {
     testImplementation "io.qameta.allure:allure-jupiter"
     testImplementation "io.qameta.allure:allure-playwright"
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
+    testImplementation "org.springframework:spring-jdbc:7.0.9"
+    testImplementation "com.mysql:mysql-connector-j:8.0.33"
+    testImplementation "org.springframework.security:spring-security-crypto:7.1.1"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"

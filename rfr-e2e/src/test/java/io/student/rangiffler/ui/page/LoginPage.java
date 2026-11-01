@@ -2,6 +2,8 @@ package io.student.rangiffler.ui.page;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Page.GetByRoleOptions;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.CredentialsForm;
@@ -17,10 +19,8 @@ public final class LoginPage {
   public LoginPage(Page page) {
     this.page = page;
     credentialsForm = new CredentialsForm(page);
-    loginButton = page.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON,
-        new Page.GetByRoleOptions().setName("Login"));
-    signInButton = page.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON,
-        new Page.GetByRoleOptions().setName("Sign in"));
+    loginButton = page.getByRole(AriaRole.BUTTON, new GetByRoleOptions().setName("Login"));
+    signInButton = page.getByRole(AriaRole.BUTTON, new GetByRoleOptions().setName("Sign in"));
   }
 
   @Step("Открыть главную страницу Rangiffler")
@@ -33,6 +33,12 @@ public final class LoginPage {
   public LoginPage clickLogin() {
     loginButton.click();
     return this;
+  }
+
+  @Step("Перейти на страницу регистрации")
+  public RegistrationPage clickRegister() {
+    page.getByRole(AriaRole.LINK, new GetByRoleOptions().setName("Sign up")).click();
+    return new RegistrationPage(page);
   }
 
   @Step("Заполнить форму входа: {username} / {password}")
