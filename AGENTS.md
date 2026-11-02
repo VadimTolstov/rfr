@@ -102,8 +102,8 @@ rfr/
 # запустить auth + api параллельно
 ./gradlew runAll        
             
-# прогнать все e2e-тесты         
-./gradlew e2e --rerun-tasks                 
+# прогнать все e2e-тесты (всегда запускаются, даже без изменений в коде)
+./gradlew e2e                 
 ```
 
 ### npm (rfr-gql-client)
