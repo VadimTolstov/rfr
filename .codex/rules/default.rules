@@ -1,0 +1,18 @@
+# Запреты на удаление файлов
+prefix_rule(pattern = ["rm"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+prefix_rule(pattern = ["unlink"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+prefix_rule(pattern = ["rd"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+prefix_rule(pattern = ["del"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+prefix_rule(pattern = ["rmdir"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+
+# Запреты на публикацию
+prefix_rule(pattern = ["git", "push"], decision = "forbidden", justification = "Push only by user manually")
+prefix_rule(pattern = ["git", "rm"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
+prefix_rule(pattern = ["git", "send-email"], decision = "forbidden", justification = "No email publication")
+prefix_rule(pattern = ["gh", "pr", "create"], decision = "forbidden", justification = "PR only by user manually")
+prefix_rule(pattern = ["git", "-C"], decision = "prompt", justification = "Confirm git commands with -C flag")
+
+# Разрешаем безопасные git-операции для ясности
+prefix_rule(pattern = ["git", "status"], decision = "allow", justification = "Read-only")
+prefix_rule(pattern = ["git", "log"], decision = "allow", justification = "Read-only")
+prefix_rule(pattern = ["git", "diff"], decision = "allow", justification = "Read-only")

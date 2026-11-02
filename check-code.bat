@@ -54,6 +54,8 @@ exit /b 0
 pushd rfr-gql-client
 call npx tsc --noEmit
 if errorlevel 1 goto frontend_failed
+call npx eslint src --max-warnings 0
+if errorlevel 1 goto frontend_failed
 popd
 call :append frontend
 exit /b 0
