@@ -56,6 +56,10 @@ rfr/
   - `test/java/io/student/rangiffler/ui/page/` — Page Objects (создавать здесь)
   - `test/java/io/student/rangiffler/ui/component/` — UI компоненты (создавать здесь)
   - `test/java/io/student/rangiffler/config/` — конфигурации (создавать здесь)
+  - `test/java/io/student/rangiffler/data/` — модели (`TestUser`) и фикстуры (`UserFixture`)
+  - `test/java/io/student/rangiffler/data/db/` — работа с БД (`Databases`, `Jdbc`, `JdbcClient`)
+  - `test/java/io/student/rangiffler/jupiter/extension/` — JUnit 5 extensions (`UserExtension`)
+  - `test/java/io/student/rangiffler/jupiter/annotation/` — кастомные аннотации (`@User`)
 - **Конфигурация параллелизма:** `src/test/resources/junit-platform.properties`
   - Параллельное выполнение классов и методов, параллелизм = 3
 
@@ -187,6 +191,12 @@ docker start rfr-mysql
 - Playwright assertions: `PlaywrightAssertions.assertThat(locator)`
 - Параллельное выполнение включено (parallelism = 3)
 - Фикстуры и SQL — вне ответственности Page Objects
+
+### Подготовка данных и фикстуры
+- Данные тестовых пользователей подготавливай через БД с помощью Spring `JdbcClient` и `CloseableResource`, чтобы гарантировать очистку.
+- Не хардкодь пользовательские данные в тестах.
+- Используй `@ExtendWith(PageFixture.class)` для управления браузером.
+- Используй `@RegisterExtension static UserExtension USER_EXTENSION = new UserExtension();` для создания пользователей в БД и указывай `@User TestUser user` в параметрах теста.
 
 ---
 
