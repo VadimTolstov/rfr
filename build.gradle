@@ -38,6 +38,18 @@ configure([project(':rfr-api'), project(':rfr-auth')]) {
     }
 }
 
+tasks.register('runAll') {
+    group = 'application'
+    description = 'Runs rfr-auth and rfr-api'
+    dependsOn ':rfr-auth:bootRun', ':rfr-api:bootRun'
+}
+
+tasks.register('e2e') {
+    group = 'verification'
+    description = 'Runs rfr-e2e tests'
+    dependsOn ':rfr-e2e:test'
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs.add('-parameters')

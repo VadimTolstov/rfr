@@ -91,18 +91,18 @@ type Query {
 
 ```graphql
 query GetUser {
-  user {
-    id
-    username
-    firstname
-    surname
-    avatar
-    location { code name flag }
-    friends(page: 0, size: 10) {
-      edges { node { id username friendStatus } }
-      pageInfo { hasNextPage hasPreviousPage }
+    user {
+        id
+        username
+        firstname
+        surname
+        avatar
+        location { code name flag }
+        friends(page: 0, size: 10) {
+            edges { node { id username friendStatus } }
+            pageInfo { hasNextPage hasPreviousPage }
+        }
     }
-  }
 }
 ```
 
@@ -110,19 +110,19 @@ query GetUser {
 
 ```graphql
 query GetFeed($withFriends: Boolean!, $country: String) {
-  feed(withFriends: $withFriends) {
-    photos(page: 0, size: 12, country: $country) {
-      edges {
-        node {
-          id src description isOwner creationDate
-          country { code name flag }
-          likes { total likes { user username creationDate } }
+    feed(withFriends: $withFriends) {
+        photos(page: 0, size: 12, country: $country) {
+            edges {
+                node {
+                    id src description isOwner creationDate
+                    country { code name flag }
+                    likes { total likes { user username creationDate } }
+                }
+            }
+            pageInfo { hasNextPage hasPreviousPage }
         }
-      }
-      pageInfo { hasNextPage hasPreviousPage }
+        stat { count country { code } }
     }
-    stat { count country { code } }
-  }
 }
 ```
 
@@ -144,7 +144,7 @@ type Mutation {
 
 ```graphql
 mutation UpdateUser($input: UserInput!) {
-  user(input: $input) { id username firstname surname avatar location { code } }
+    user(input: $input) { id username firstname surname avatar location { code } }
 }
 ```
 ```json
@@ -155,7 +155,7 @@ mutation UpdateUser($input: UserInput!) {
 
 ```graphql
 mutation FriendshipAction($input: FriendshipInput!) {
-  friendship(input: $input) { id username friendStatus }
+    friendship(input: $input) { id username friendStatus }
 }
 ```
 ```json
@@ -173,7 +173,7 @@ mutation FriendshipAction($input: FriendshipInput!) {
 
 ```graphql
 mutation CreatePhoto($input: PhotoInput!) {
-  photo(input: $input) { id src description country { code name flag } likes { total } }
+    photo(input: $input) { id src description country { code name flag } likes { total } }
 }
 ```
 ```json

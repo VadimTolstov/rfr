@@ -16,6 +16,14 @@ rfr/
 └── rfr-gql-client/   # React/TypeScript SPA (Vite + MUI, port 3001)
 ```
 
+> 💡 **Модульные инструкции:**
+> - `rfr-auth/AGENTS.md` — OAuth Server, токены, CSRF
+> - `rfr-api/AGENTS.md` — GraphQL API, что mock, а что реально
+> - `rfr-e2e/AGENTS.md` — E2E-тесты, Page Objects, фикстуры
+> - `rfr-gql-client/AGENTS.md` — React SPA, Apollo, MUI
+>
+> При работе в модуле **обязательно** читай соответствующий файл.
+
 ### rfr-api (GraphQL API)
 - **Пакет:** `io.student.rangiffler`
 - **Технологии:** Spring Boot 4.1.1, DGS codegen, Spring GraphQL, Spring Data JPA, Flyway, Lombok, MySQL 8
@@ -50,16 +58,6 @@ rfr/
 ### rfr-e2e (E2E-тесты)
 - **Пакет:** `io.student.rangiffler`
 - **Технологии:** JUnit Jupiter 6.1.3, Playwright Java 1.63.0, Allure 3, AspectJ
-- **Структура:**
-  - `test/` — тесты
-  - `test/fake/` — заглушки (SimpleTest)
-  - `test/java/io/student/rangiffler/ui/page/` — Page Objects (создавать здесь)
-  - `test/java/io/student/rangiffler/ui/component/` — UI компоненты (создавать здесь)
-  - `test/java/io/student/rangiffler/config/` — конфигурации (создавать здесь)
-  - `test/java/io/student/rangiffler/data/` — модели (`TestUser`) и фикстуры (`UserFixture`)
-  - `test/java/io/student/rangiffler/data/db/` — работа с БД (`Databases`, `Jdbc`, `JdbcClient`)
-  - `test/java/io/student/rangiffler/jupiter/extension/` — JUnit 5 extensions (`UserExtension`)
-  - `test/java/io/student/rangiffler/jupiter/annotation/` — кастомные аннотации (`@User`)
 - **Конфигурация параллелизма:** `src/test/resources/junit-platform.properties`
   - Параллельное выполнение классов и методов, параллелизм = 3
 
@@ -101,14 +99,11 @@ rfr/
 ./gradlew :rfr-api:build
 ./gradlew :rfr-auth:build
 
-# Запуск E2E-тестов (один тест)
-./gradlew :rfr-e2e:test --tests 'io.student.rangiffler.test.fake.SimpleTest' --rerun-tasks
-
-# Запуск E2E-тестов (все)
-./gradlew :rfr-e2e:test
-
-# Запуск конкретного теста (PowerShell)
-./gradlew :rfr-e2e:test --tests 'SimpleTest' --rerun-tasks
+# запустить auth + api параллельно
+./gradlew runAll        
+            
+# прогнать все e2e-тесты         
+./gradlew e2e --rerun-tasks                 
 ```
 
 ### npm (rfr-gql-client)
@@ -144,63 +139,7 @@ docker start rfr-mysql
 
 ---
 
-## 4. Кодстайл Page Objects (rfr-e2e)
-
-> Это краткая выжимка. Полный контракт — в skill `.claude/skills/rfr-page-objects/SKILL.md`.
-> При расхождении приоритет у skill'а.
-
-### Структура пакетов
-- **Page Objects:** `io.student.rangiffler.ui.page`
-- **UI компоненты:** `io.student.rangiffler.ui.component`
-- **Конфигурации:** `io.student.rangiffler.config`
-
-### Конструктор
-- Класс `final`, поля `private final`: `Page`, `Locator`, компоненты
-- Конструктор принимает **только `Page`** и **только присваивает поля**
-- **Без** переходов, кликов, проверок, ожиданий, SQL
-
-### Методы
-- Каждый публичный метод — с `@Step`, каждый параметр в тексте: `@Step("Заполнить форму входа: {username} / {password}")`
-- Переход → возвращает объект следующей страницы; действие/проверка → `this`
-- Одно бизнес-действие — один метод, имя по форме: `fillLoginForm(...)`, `fillRegistrationForm(...)`
-- Без безликих `fillForm`/`fill`/`submit`
-
-### Проверки
-- `fill…` / `click…` — **ничего не проверяют**
-- `checkThat…` — **только проверяют** через `PlaywrightAssertions.assertThat(locator)`
-- Без `checkThatOpened`, `checkPageLoaded`, `isLoaded`, `waitUntilLoaded`
-- Без `locator.isVisible()` в JUnit-проверках и ручных ожиданий
-- Ожидаемое значение приходит из теста: `checkThatUsername(username)`
-
-### Локаторы
-- `getByRole` с точным `name`, `getByLabel`, `getByPlaceholder`, `getByText`, `getByTestId`
-- Без `first()`/`nth()`, MUI-классов, XPath
-- Неуникальный элемент сужать родителем: `page.getByRole(BANNER).getByRole(...)`
-
-### Общее
-- Композиция вместо наследования (общие части — компоненты)
-- Вход только через UI, `access_token` в `localStorage` не подставлять
-- Без комментариев и Javadoc
-
----
-
-## 5. Кодстайл тестов (rfr-e2e)
-
-- JUnit Jupiter 6.x (`org.junit.jupiter.api.Test`, `@Test`)
-- Allure интеграция: `Allure.step("Название шага", () -> { ... })`
-- Playwright assertions: `PlaywrightAssertions.assertThat(locator)`
-- Параллельное выполнение включено (parallelism = 3)
-- Фикстуры и SQL — вне ответственности Page Objects
-
-### Подготовка данных и фикстуры
-- Данные тестовых пользователей подготавливай через БД с помощью Spring `JdbcClient` и `CloseableResource`, чтобы гарантировать очистку.
-- Не хардкодь пользовательские данные в тестах.
-- Используй `@ExtendWith(PageFixture.class)` для управления браузером.
-- Используй `@RegisterExtension static UserExtension USER_EXTENSION = new UserExtension();` для создания пользователей в БД и указывай `@User TestUser user` в параметрах теста.
-
----
-
-## 6. Формат веток
+## 4. Формат веток
 
 Наблюдение по git-истории:
 
@@ -215,7 +154,7 @@ docker start rfr-mysql
 
 ---
 
-## 7. Формат коммитов
+## 5. Формат коммитов
 
 История показывает два стиля:
 
@@ -265,7 +204,7 @@ type: краткое описание на английском (Imperative mood
 
 ---
 
-## 8. Зависимости и версии
+## 6. Зависимости и версии
 
 | Компонент | Версия |
 |-----------|--------|
@@ -287,30 +226,27 @@ type: краткое описание на английском (Imperative mood
 
 ---
 
-## 9. Локальная настройка
+## 7. Локальная настройка
 
-### Подъём MySQL (безопасно, без localenv.sh)
-docker run --name rfr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret -d mysql:8.4.7
+### Подъём MySQL (безопасно)
 
-Если контейнер уже существует:
+```bash
+# удаляет только rfr-mysql, данные в volume сохраняются
+bash localenv.sh   
+```
+
+Или вручную, если контейнер уже есть:
 docker start rfr-mysql
 
-### Установка браузеров Playwright (один раз)
-./gradlew :rfr-e2e:installPlaywright
-
 ### Запуск сервисов (в порядке важности)
-1. rfr-auth (первым!): ./gradlew :rfr-auth:bootRun    # порт 9001
-2. rfr-api:               ./gradlew :rfr-api:bootRun    # порт 8081
-3. rfr-gql-client:        cd rfr-gql-client && npm run dev  # порт 3001
 
-### Прогон E2E-тестов
-./gradlew :rfr-e2e:test --tests '*RegistrationTest' --tests '*MainPageTest' --rerun-tasks
-./gradlew :rfr-e2e:allureReport
+```bash
+./gradlew runAll   # поднимает rfr-auth и rfr-api параллельно
+cd rfr-gql-client && npm run dev   # фронт на :3001
+```
 
+## 8. Запрещено
 
-## 10. Запрещено
-
-- **Не запускать `localenv.sh`** — он останавливает и удаляет ВСЕ Docker-контейнеры на машине.
 - **Не запускать `ports.sh`** — он убивает процессы на портах 3001/8081/9001/3306, в том числе уже работающий стенд.
 - **Не делать `git commit` / `git push` без явной просьбы.**
 - **Не трогать `application.yml`, `build.gradle`, `docker-compose.yml` без явной просьбы.**
@@ -319,13 +255,13 @@ docker start rfr-mysql
 
 ---
 
-## 11. Язык общения
+## 9. Язык общения
 
 - **Общайся со мной исключительно на русском языке.**
 - Код, названия переменных и классов, пути к файлам, команды терминала, логи и сообщения коммитов оставляй на английском (как принято в проекте).
 
 ---
 
-## 12. Использование RTK (экономия токенов)
+## 10. Использование RTK (экономия токенов)
 Все команды терминала выполняй с префиксом `rtk`. Если в песочнице возникает ошибка «rtk не распознается», используй полный путь к исполняемому файлу:
 `"C:\Users\Vadim\AppData\Local\Microsoft\WinGet\Links\rtk.exe" git status`
