@@ -224,7 +224,7 @@ UUID пользователя в `rangiffler-api` и `rangiffler-auth` неза�
 
 ```bash
 # из корня проекта: MySQL в Docker
-# внимание: localenv.sh останавливает и удаляет ВСЕ docker-контейнеры на машине
+# localenv.sh пересоздаёт только контейнер rfr-mysql через docker compose; данные в volume mysql-volume сохраняются
 bash localenv.sh
 
 cd rfr-api

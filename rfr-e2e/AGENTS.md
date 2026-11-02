@@ -28,7 +28,7 @@
 - При мутациях (например, `clickSave`) используй `page.waitForResponse`, чтобы `reload()` не обогнал мутацию.
 
 ## Правила написания тестов
-- Используй JUnit 5: `@ExtendWith(PageFixture.class)` и `@RegisterExtension static UserExtension`.
+- Используй JUnit Jupiter 6.1.3: `@ExtendWith(PageFixture.class)` и `@RegisterExtension static UserExtension`.
 - **Данные:** Создавай пользователей только через `@User TestUser user` (БД, `JdbcClient`, `CloseableResource`).
 - **Fluent-интерфейс:** Тест должен быть одной цепочкой вызовов. Никаких `Allure.step` вокруг всего теста.
 - **Аннотации:** Используй `@DisplayName`.
@@ -37,7 +37,7 @@
 - Проход сценария через MCP — это **не** запуск теста.
 - Успех подтверждается только прогоном Gradle:
     - Запуск всех тестов: `./gradlew :rfr-e2e:test`
-    - Запуск конкретного теста: `./gradlew :rfr-e2e:test --tests '<Тест>' --rerun-tasks`
+    - Запуск конкретного теста: `./gradlew :rfr-e2e:test --tests '<Тест>'`
 - Установка браузеров (один раз): `./gradlew :rfr-e2e:installPlaywright`
 
 ## Запрещено

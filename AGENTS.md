@@ -130,11 +130,11 @@ npm run preview
 ### Docker (MySQL)
 
 ```bash
-# Поднять MySQL-контейнер (если ещё не поднят)
-docker run --name rfr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret -d mysql:8.4.7
+# Поднять MySQL (если ещё не поднят)
+docker compose up -d --wait
 
-# Если контейнер уже существует
-docker start rfr-mysql
+# Остановить (данные в volume сохраняются)
+docker compose down
 ```
 
 ---
@@ -216,7 +216,8 @@ type: краткое описание на английском (Imperative mood
 | Allure | 3.0.0 (Java), 3.17.0 (report) |
 | AspectJ | 1.9.25.1 |
 | Lombok | 1.18.48 |
-| MySQL | 8.0.33 |
+| MySQL Server (в Compose) | 8.4.7 |
+| MySQL Connector/J (JDBC-драйвер) | 8.0.33 |
 | Flyway | 13.7.0 |
 | React | 19.3.0 |
 | TypeScript | ~6.0.3 |
@@ -235,8 +236,7 @@ type: краткое описание на английском (Imperative mood
 bash localenv.sh   
 ```
 
-Или вручную, если контейнер уже есть:
-docker start rfr-mysql
+Или вручную: `docker compose up -d --wait`
 
 ### Запуск сервисов (в порядке важности)
 
@@ -250,7 +250,7 @@ cd rfr-gql-client && npm run dev   # фронт на :3001
 - **Не запускать `ports.sh`** — он убивает процессы на портах 3001/8081/9001/3306, в том числе уже работающий стенд.
 - **Никогда не использовать `rm` для удаления файлов.** Если нужно удалить файл, переименовать его в `.<имя>.<timestamp>.bak` (например, `.file.txt.20231102.bak`) и предложить пользователю удалить резервную копию позже.
 - **Не делать `git commit` / `git push` без явной просьбы.**
-- **Не трогать `application.yml`, `build.gradle`, `docker-compose.yml` без явной просьбы.**
+- **Не трогать `application.yml`, `build.gradle`, `compose.yaml` без явной просьбы.**
 - **Не менять файлы вне `rfr-e2e/` при работе над тестами** (auth/api/frontend — чужая зона).
 - **При сомнениях — спрашивать, не догадываться.**
 
