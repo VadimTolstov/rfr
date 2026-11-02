@@ -7,29 +7,80 @@ on:
       - master
       - 'hw/*'
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      workflow: ${{ steps.filter.outputs.workflow }}
+      shared: ${{ steps.filter.outputs.shared }}
+      api: ${{ steps.filter.outputs.api }}
+      auth: ${{ steps.filter.outputs.auth }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: master
+          filters: |
+            workflow:
+              - '.github/workflows/ci.yml'
+            shared:
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradle/**'
+            api:
+              - 'rfr-api/**'
+            auth:
+              - 'rfr-auth/**'
+            e2e:
+              - 'rfr-e2e/**'
+            frontend:
+              - 'rfr-gql-client/**'
+
   backend:
+    needs: changes
+    if: needs.changes.outputs.workflow == 'true' || needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true' || needs.changes.outputs.auth == 'true' || needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
-          cache: gradle
-      - name: Build backend services
-        run: ./gradlew :rfr-api:build :rfr-auth:build
-      - name: Compile E2E tests
-        run: ./gradlew :rfr-e2e:compileTestJava
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Build changed Gradle modules
+        env:
+          WORKFLOW: ${{ needs.changes.outputs.workflow }}
+          SHARED: ${{ needs.changes.outputs.shared }}
+          AUTH: ${{ needs.changes.outputs.auth }}
+          API: ${{ needs.changes.outputs.api }}
+          E2E: ${{ needs.changes.outputs.e2e }}
+        run: |
+          tasks=()
+          [[ $WORKFLOW == true ]] && SHARED=true
+          [[ $SHARED == true || $AUTH == true ]] && tasks+=(:rfr-auth:build)
+          [[ $SHARED == true || $API == true ]] && tasks+=(:rfr-api:build)
+          [[ $SHARED == true || $E2E == true ]] && tasks+=(:rfr-e2e:compileTestJava)
+          ./gradlew "${tasks[@]}"
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.workflow == 'true' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: rfr-gql-client
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
