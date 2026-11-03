@@ -35,3 +35,7 @@ Thumbs.db
 # Local agent notes
 AGENTS.md
 docs/
+.playwright-mcp/
+MEMORY.md
+.gigacode/
+*.bak

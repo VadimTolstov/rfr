@@ -11,15 +11,26 @@ import io.student.rangiffler.config.TestConfig;
 public final class MainPage {
   public static final String URL = TestConfig.FRONTEND_URL + "/";
 
+  private final Page page;
   private final Locator travelsMap;
+  private final Locator profileLink;
 
   public MainPage(Page page) {
+    this.page = page;
     travelsMap = page.getByRole(AriaRole.HEADING, new GetByRoleOptions().setName("Travels map"));
+    profileLink = page.getByRole(AriaRole.BANNER)
+        .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Profile").setExact(true));
   }
 
   @Step("Проверить, что карта путешествий отображается")
   public MainPage checkThatTravelsMapVisible() {
     PlaywrightAssertions.assertThat(travelsMap).isVisible();
     return this;
+  }
+
+  @Step("Открыть профиль пользователя")
+  public ProfilePage clickProfile() {
+    profileLink.click();
+    return new ProfilePage(page);
   }
 }

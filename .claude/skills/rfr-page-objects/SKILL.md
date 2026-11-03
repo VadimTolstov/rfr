@@ -19,9 +19,11 @@ description: Создаёт и меняет Page Objects и компоненты
 7. Действие отдельно от проверки: `fill…`/`click…` ничего не проверяют; `checkThat…` только проверяют через `PlaywrightAssertions.assertThat(locator)` и ничего не кликают. Без `locator.isVisible()` в JUnit-проверках и ручных ожиданий.
 8. Без `checkThatOpened`, `checkPageLoaded`, `isLoaded`, `waitUntilLoaded`: `click`/`fill` ждут элемент, web-first assertions ждут состояние. URL и видимость страницы проверяем, только когда переход и есть предмет теста.
 9. Локаторы: `getByRole` с точным `name`, `getByLabel`, `getByPlaceholder`, `getByText` с точным совпадением, `getByTestId`. Без `first()`/`nth()`, MUI-классов и XPath; неуникальный элемент сужай родителем: `page.getByRole(AriaRole.BANNER).getByRole(…)`.
-10. Проверка не должна быть тавтологией локатора: `assertThat(heading("Travels map")).hasText("Travels map")` ничего не доказывает. Ожидаемое значение приходит из теста (`checkThatUsername(username)`).
-11. Вход только через UI; `access_token`/`id_token` в `localStorage` не подставлять (до занятия 13).
-12. Без комментариев и Javadoc: смысл передают имена методов и текст `@Step`.
+10. При действиях, вызывающих мутации данных, используй `page.waitForResponse` до следующего действия.
+11. Для MUI `Select` открывай `COMBOBOX` и выбирай `OPTION`, отфильтрованный по `IMG` с точным именем.
+12. Проверка не должна быть тавтологией локатора: `assertThat(heading("Travels map")).hasText("Travels map")` ничего не доказывает. Ожидаемое значение приходит из теста (`checkThatUsername(username)`).
+13. Вход только через UI; `access_token`/`id_token` в `localStorage` не подставлять (до занятия 13).
+14. Без комментариев и Javadoc: смысл передают имена методов и текст `@Step`.
 
 ## Проверка результата
 
