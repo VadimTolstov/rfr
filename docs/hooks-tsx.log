@@ -1,0 +1,12 @@
+=== TypeScript/ESLint Feedback Loop Test ===
+
+$ check-code.bat (with React Hooks violation)
+src\App.tsx
+11:9 error React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render react-hooks/rules-of-hooks
+
+✖ 1 problem (1 error, 0 warnings)
+
+=== After codex fixed the hook position ===
+
+$ check-code.bat
+CHECK OK: frontend

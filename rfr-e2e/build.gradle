@@ -47,4 +47,21 @@ allure {
 test {
     useJUnitPlatform()
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
+    outputs.upToDateWhen { false }
+}
+
+tasks.register('installPlaywright', JavaExec) {
+    group = 'playwright'
+    description = 'Installs Playwright browsers'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args = ['install']
+}
+
+tasks.register('installPlaywrightWithDeps', JavaExec) {
+    group = 'playwright'
+    description = 'Installs Playwright browsers with system dependencies (for Ubuntu CI)'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args = ['install', '--with-deps', 'chromium']
 }

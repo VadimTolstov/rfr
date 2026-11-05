@@ -1,0 +1,20 @@
+=== Java Feedback Loop Test ===
+
+$ check-code.bat (with intentional syntax error)
+BrokenTest.java:7: error: reached end of file while parsing
+}
+^
+1 error
+
+Execution failed for task ':rfr-api:compileJava'
+BUILD FAILED in 7s
+
+=== After codex fixed the error ===
+
+$ check-code.bat
+CHECK OK: rfr-api
+
+=== After renaming to .bak ===
+
+$ check-code.bat
+NO CHANGES DETECTED
