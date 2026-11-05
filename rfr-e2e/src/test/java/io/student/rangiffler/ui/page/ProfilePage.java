@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import java.util.regex.Pattern;
 
 public final class ProfilePage {
   public static final String URL = TestConfig.FRONTEND_URL + "/profile";
@@ -113,10 +112,11 @@ public final class ProfilePage {
 
   @Step("Проверить аватар после загрузки из файла: {avatarPath}")
   public ProfilePage checkThatAvatarMatches(Path avatarPath) throws IOException {
-    String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(avatarPath)).replace("+", "\\+");
+    String mimeType = avatarPath.toString().endsWith(".png") ? "image/png" : "image/jpeg";
+    String expectedSrc = "data:" + mimeType + ";base64,"
+        + Base64.getEncoder().encodeToString(Files.readAllBytes(avatarPath));
     PlaywrightAssertions.assertThat(avatarImage)
-        .hasAttribute("src", Pattern.compile("^data:image/[^;]+;base64,"
-            + base64 + "$"));
+        .hasAttribute("src", expectedSrc);
     return this;
   }
 }
