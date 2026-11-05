@@ -1,16 +1,14 @@
 package io.student.rangiffler.test;
 
 import com.microsoft.playwright.Page;
-import io.student.rangiffler.config.PageFixture;
+import com.microsoft.playwright.junit.UsePlaywright;
+import io.student.rangiffler.config.PlaywrightOptionsFactory;
 import io.student.rangiffler.ui.page.LoginPage;
-import io.student.rangiffler.ui.page.MainPage;
-import io.student.rangiffler.ui.page.RegistrationPage;
 import io.student.rangiffler.utils.RandomDataUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(PageFixture.class)
+@UsePlaywright(PlaywrightOptionsFactory.class)
 public class RegistrationTest {
   @Test
   @DisplayName("Регистрация пользователя и успешная авторизация")

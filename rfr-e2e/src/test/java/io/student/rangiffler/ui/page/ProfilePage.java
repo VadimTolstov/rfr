@@ -8,7 +8,10 @@ import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.regex.Pattern;
 
 public final class ProfilePage {
@@ -109,9 +112,10 @@ public final class ProfilePage {
   }
 
   @Step("Проверить аватар после загрузки из файла: {avatarPath}")
-  public ProfilePage checkThatAvatarMatches(Path avatarPath) {
+  public ProfilePage checkThatAvatarMatches(Path avatarPath) throws IOException {
     PlaywrightAssertions.assertThat(avatarImage)
-        .hasAttribute("src", Pattern.compile("^data:image/.*"));
+        .hasAttribute("src", Pattern.compile("^data:image/[^;]+;base64,"
+            + Pattern.quote(Base64.getEncoder().encodeToString(Files.readAllBytes(avatarPath))) + "$"));
     return this;
   }
 }
