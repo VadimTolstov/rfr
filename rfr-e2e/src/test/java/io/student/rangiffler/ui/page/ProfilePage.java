@@ -113,9 +113,10 @@ public final class ProfilePage {
 
   @Step("Проверить аватар после загрузки из файла: {avatarPath}")
   public ProfilePage checkThatAvatarMatches(Path avatarPath) throws IOException {
+    String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(avatarPath)).replace("+", "\\+");
     PlaywrightAssertions.assertThat(avatarImage)
         .hasAttribute("src", Pattern.compile("^data:image/[^;]+;base64,"
-            + Pattern.quote(Base64.getEncoder().encodeToString(Files.readAllBytes(avatarPath))) + "$"));
+            + base64 + "$"));
     return this;
   }
 }
