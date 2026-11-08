@@ -9,9 +9,14 @@ public record ApiProfile(String username) {
   }
 
   public void delete() {
-    Jdbc.inTransaction(Databases.API, jdbc -> jdbc.sql(Jdbc.loadSql("sql/api/delete_user.sql"))
-        .param("username", username)
-        .update());
+    Jdbc.inTransaction(Databases.API, jdbc -> {
+      jdbc.sql(Jdbc.loadSql("sql/api/delete_user_friendships.sql"))
+          .param("username", username)
+          .update();
+      jdbc.sql(Jdbc.loadSql("sql/api/delete_user.sql"))
+          .param("username", username)
+          .update();
+    });
   }
 
   public boolean exists() {

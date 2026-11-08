@@ -2,9 +2,10 @@ package io.student.rangiffler.jupiter.extension;
 
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
-import io.student.rangiffler.jupiter.request.UserRequest;
 import io.student.rangiffler.jupiter.annotation.User;
-import java.util.Arrays;
+import io.student.rangiffler.jupiter.request.UserRequest;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -16,16 +17,28 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        User annotation = context.getTestMethod()
-                .stream()
-                .flatMap(method -> Arrays.stream(method.getParameters()))
-                .filter(parameter -> parameter.isAnnotationPresent(User.class))
-                .map(parameter -> parameter.getAnnotation(User.class))
-                .findFirst()
-                .orElseThrow(() -> new ParameterResolutionException("User annotation was not found for test " + context.getDisplayName()));
-        UserFixture fixture = new UserRequest(annotation.friends(), annotation.incomeInvitations()).fixture();
-        context.getStore(NAMESPACE).put(context.getUniqueId(), fixture);
-        fixture.create();
+        Method method = context.getTestMethod()
+                .orElseThrow(() -> new ParameterResolutionException("Test method was not found for " + context.getDisplayName()));
+        Parameter[] parameters = method.getParameters();
+        ExtensionContext.Store store = context.getStore(NAMESPACE);
+        boolean found = false;
+        for (int index = 0; index < parameters.length; index++) {
+            Parameter parameter = parameters[index];
+            if (parameter.isAnnotationPresent(User.class)) {
+                found = true;
+                String key = storeKey(context, index);
+                if (store.get(key) != null) {
+                    continue;
+                }
+                User annotation = parameter.getAnnotation(User.class);
+                UserFixture fixture = new UserRequest(annotation.friends(), annotation.incomeInvitations()).fixture();
+                store.put(key, fixture);
+                fixture.create();
+            }
+        }
+        if (!found) {
+            throw new ParameterResolutionException("User annotation was not found for test " + context.getDisplayName());
+        }
     }
 
     @Override
@@ -38,10 +51,14 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
     @Override
     public TestUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
         UserFixture fixture = extensionContext.getStore(NAMESPACE)
-                .get(extensionContext.getUniqueId(), UserFixture.class);
+                .get(storeKey(extensionContext, parameterContext.getIndex()), UserFixture.class);
         if (fixture == null) {
             throw new ParameterResolutionException("User fixture was not created for test " + extensionContext.getDisplayName());
         }
         return fixture.user();
+    }
+
+    private String storeKey(ExtensionContext context, int parameterIndex) {
+        return context.getUniqueId() + ":" + parameterIndex;
     }
 }
