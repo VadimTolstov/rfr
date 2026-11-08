@@ -1,19 +1,16 @@
 package io.student.rangiffler.data;
 
-public final class TestUser {
-  private final String username;
-  private final String password;
+import io.student.rangiffler.utils.RandomDataUtils;
+import java.util.List;
 
-  public TestUser(String username, String password) {
-    this.username = username;
-    this.password = password;
+/** Carries credentials and related test users. */
+public record TestUser(String username, String password, List<TestUser> friends, List<TestUser> incomeInvitations) {
+  public TestUser {
+    friends = List.copyOf(friends);
+    incomeInvitations = List.copyOf(incomeInvitations);
   }
 
-  public String username() {
-    return username;
-  }
-
-  public String password() {
-    return password;
+  public static TestUser unique() {
+    return new TestUser(RandomDataUtils.randomUsername(), RandomDataUtils.randomPassword(), List.of(), List.of());
   }
 }
