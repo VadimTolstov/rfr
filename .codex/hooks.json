@@ -12,6 +12,15 @@
             "statusMessage": "Проверка Git-команды по правилам проекта"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook codex"
+          }
+        ]
       }
     ],
     "PostToolUse": [
