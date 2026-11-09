@@ -27,14 +27,10 @@ public record UserRequest(int friends, int incomeInvitations, int outcomeInvitat
         TestUser user = new TestUser(credentials.username(), credentials.password(), users(friends), users(incomeInvitations), List.of())
                 .withOutcomeInvitations(users(outcomeInvitations));
         UserFixture fixture = new SingleUserFixture(user);
-        if (!user.friends().isEmpty()) {
-            fixture = new UserWithFriendsFixture(fixture);
-        }
-        if (!user.incomeInvitations().isEmpty()) {
-            fixture = new UserWithIncomeInvitations(fixture);
-        }
-        if (!user.outcomeInvitations().isEmpty()) {
-            fixture = new UserWithOutcomeInvitationsFixture(fixture);
+        for (Relation relation : Relation.values()) {
+            if (!relation.users(user).isEmpty()) {
+                fixture = new UserWithRelationsFixture(fixture, relation);
+            }
         }
         return fixture;
     }

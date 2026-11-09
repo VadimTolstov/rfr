@@ -1,16 +1,17 @@
 ---
 name: rfr-test-data
-description: Create and maintain test users and preconditions in Rangiffler rfr-e2e.
+description: Правила подготовки тестовых пользователей, API-профилей и связей в модуле rfr-e2e.
 ---
 
-# rfr-test-data v1
+# Данные тестов Rangiffler (v1)
 
-- Give every test user unique generated credentials; use `TestUser.unique()` instead of fixed identities.
-- Let the `UserFixture` decorator tree own users, profiles, and relationships it creates.
-- Register the root fixture before creation so Store cleanup can handle partial setup failures.
-- Model each new user precondition as a `UserFixture` decorator and compose it in `UserRequest.fixture()`.
-- Keep `UserExtension` generic; do not add precondition branches or ownership state there.
-- Keep SQL and persistence operations in row objects under `data/db`; keep SQL out of `jupiter`, fixtures, and tests.
-- Create `ApiProfile` explicitly whenever a test user needs an API profile; an auth account does not imply one.
-- Close resources in reverse creation order through `TearDown`; remove owned relationships before related users and delegates.
-- Use a pool of pre-seeded users only when the required data cannot be created through supported test-data objects; document who consumes and cleans them up.
+- Создавай уникальные учётные данные через `TestUser.unique()`; не используй фиксированные логины и пароли.
+- Владельцем созданных пользователей, профилей и связей является дерево декораторов `UserFixture`.
+- Регистрируй корневую фикстуру в Store до `create()`, чтобы очистка сработала и после частичной подготовки.
+- Связи добавляй в `Relation`; общий `UserWithRelationsFixture` выбирает список пользователей, направление и статус связи.
+- Отдельный декоратор `UserFixture` нужен для предусловия с собственным жизненным циклом.
+- `UserExtension` оставляй универсальным: не добавляй в него ветвления предусловий или владение данными.
+- SQL и операции с БД размещай только в объектах `data/db`; не добавляй SQL в `jupiter`, фикстуры или тесты.
+- Явно создавай `ApiProfile`, если тесту нужен API-профиль: создание аккаунта авторизации его не создаёт.
+- Закрывай динамические ресурсы в обратном порядке через `TearDown`: сначала связи, затем связанные фикстуры и делегат.
+- Используй пул `StaticUserFixture`, только если нужные учётные данные надо повторно выдавать; пул не создаёт и не удаляет записи БД.
