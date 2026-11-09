@@ -53,6 +53,19 @@ public final class UserExtensionTest {
   }
 
   @Test
+  @DisplayName("Создаёт исходящее приглашение и удаляет приглашённого после закрытия Store")
+  void shouldCreateAndCloseOutcomeInvitation(TestReporter reporter) {
+    EngineExecutionResults results = execute(OutcomeInvitationTarget.class);
+    assertEquals(1, results.testEvents().succeeded().count());
+    Map<String, String> entries = reportEntries(results);
+    String username = entries.get("username");
+    String invitee = entries.get("invitee");
+    assertFalse(new Friendship(username, invitee, FriendshipStatus.PENDING).exists());
+    assertAbsent(invitee);
+    reporter.publishEntry("outcome-invitation", "created-and-removed");
+  }
+
+  @Test
   @DisplayName("Закрывает Store после падения теста")
   void shouldCloseStoreAfterTestFailure(TestReporter reporter) {
     EngineExecutionResults results = execute(FailingUserTarget.class);
@@ -83,6 +96,16 @@ public final class UserExtensionTest {
     Throwable failure = failure(results);
     assertTrue(hasCause(failure, IllegalArgumentException.class));
     reporter.publishEntry("negative-friends", "rejected");
+  }
+
+  @Test
+  @DisplayName("Отклоняет отрицательное количество исходящих приглашений до создания пользователя")
+  void shouldRejectNegativeOutcomeInvitations(TestReporter reporter) {
+    EngineExecutionResults results = execute(NegativeOutcomeInvitationTarget.class);
+    Throwable failure = failure(results);
+    assertTrue(hasCause(failure, IllegalArgumentException.class));
+    assertFalse(hasCause(failure, AssertionError.class));
+    reporter.publishEntry("negative-outcome-invitations", "rejected-before-test");
   }
 
   @Test
@@ -187,6 +210,17 @@ public final class UserExtensionTest {
   }
 
   @ProbeTarget
+  static class OutcomeInvitationTarget {
+    @Test
+    void receivesUserWithOutcomeInvitation(@User(outcomeInvitations = 1) TestUser user, TestReporter reporter) {
+      TestUser invitee = user.outcomeInvitations().getFirst();
+      assertTrue(new ApiProfile(invitee.username()).exists());
+      assertTrue(new Friendship(user.username(), invitee.username(), FriendshipStatus.PENDING).exists());
+      reporter.publishEntry(Map.of("username", user.username(), "invitee", invitee.username()));
+    }
+  }
+
+  @ProbeTarget
   static class MultipleUsersTarget {
     @Test
     void receivesDistinctUsers(@User TestUser first, @User TestUser second, TestReporter reporter) {
@@ -202,6 +236,14 @@ public final class UserExtensionTest {
     @Test
     void rejectsNegativeFriends(@User(friends = -1) TestUser user) {
       fail("Negative friend count should be rejected");
+    }
+  }
+
+  @ProbeTarget
+  static class NegativeOutcomeInvitationTarget {
+    @Test
+    void rejectsNegativeOutcomeInvitations(@User(outcomeInvitations = -1) TestUser user) {
+      fail("Negative outcome invitation count should be rejected before user creation");
     }
   }
 
