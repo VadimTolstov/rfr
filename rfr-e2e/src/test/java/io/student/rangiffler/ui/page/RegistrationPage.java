@@ -4,11 +4,14 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Page.GetByRoleOptions;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
-import io.qameta.allure.Step;
 import com.microsoft.playwright.options.AriaRole;
+import io.qameta.allure.Step;
+import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.CredentialsForm;
 
 public final class RegistrationPage {
+  public static final String URL = TestConfig.AUTH_URL + "/register";
+
   private final Page page;
   private final CredentialsForm credentialsForm;
   private final Locator signUpButton;

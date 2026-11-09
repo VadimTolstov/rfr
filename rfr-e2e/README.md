@@ -1,13 +1,15 @@
 # rfr-e2e
 
-E2E-тесты Rangiffler: JUnit 6.1.3, Playwright Java 1.63 (`PageFixture`), Allure 3, `JdbcClient`.
+E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 и Spring `JdbcClient`. Тестовые классы используют `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright передаёт `Page` в параметры тестов.
 
 ## Запуск
 
 ```bash
-./gradlew :rfr-e2e:installPlaywright                      # один раз: браузер Chromium
+./gradlew :rfr-e2e:installPlaywright                      # один раз: браузеры Playwright
 ./gradlew :rfr-e2e:test --tests '*RegistrationTest'
 ./gradlew :rfr-e2e:test --tests '*MainPageTest'
+./gradlew :rfr-e2e:test --tests '*FriendsTabTest' --tests '*IncomeInvitationsTabTest' --tests '*OutcomeInvitationsTabTest'
+./gradlew :rfr-e2e:test --tests '*UserExtensionTest'
 ./gradlew :rfr-e2e:allureReport                           # rfr-e2e/build/reports/allure-report/allureReport/index.html
 ```
 
@@ -15,16 +17,18 @@ E2E-тесты Rangiffler: JUnit 6.1.3, Playwright Java 1.63 (`PageFixture`), Al
 
 ## Конфигурация
 
-`TestConfig` читает `-Drfr.<ключ>` → `RFR_<КЛЮЧ>` → значение по умолчанию. Gradle передаёт все `-Drfr.*` в тестовую JVM.
+`TestConfig` проверяет системное свойство тестовой JVM, затем переменную окружения и затем значение по умолчанию. Для запуска через Gradle используй переменные окружения: параметры `-Drfr.*`, переданные Gradle, не настроены на передачу в тестовую JVM. Например, `rfr.authDbUrl` соответствует `RFR_AUTH_DB_URL`.
 
 | Ключ | По умолчанию |
 |---|---|
 | `rfr.frontUrl` | `http://localhost:3001` |
 | `rfr.authUrl` | `http://localhost:9001` |
 | `rfr.apiUrl` | `http://localhost:8081` |
-| `rfr.dbUrl` | `jdbc:mysql://localhost:3306` (схема добавляется кодом) |
+| `rfr.authDbUrl` | `jdbc:mysql://localhost:3306/rangiffler-auth` |
+| `rfr.apiDbUrl` | `jdbc:mysql://localhost:3306/rangiffler-api` |
 | `rfr.dbUser` / `rfr.dbPassword` | `root` / `secret` |
-| `rfr.browser` / `rfr.headless` | `chromium` / `true` |
+
+Браузерные параметры не читаются из `TestConfig`: `PlaywrightOptionsFactory` включает headless-режим и задаёт локаль `en-US`.
 
 ## Архитектура
 
@@ -32,17 +36,18 @@ E2E-тесты Rangiffler: JUnit 6.1.3, Playwright Java 1.63 (`PageFixture`), Al
 
 | Пакет | Что лежит |
 |---|---|
-| `config` | `TestConfig` — единственная точка чтения настроек |
-| `jupiter` | всё про JUnit: `annotation` (`@User`), `extension` (`UserExtension`), позже `condition`, `probe` |
-| `data` | тестовые данные и их владельцы: `TestUser`, `UserFixture` (`SingleUserFixture`); `db` — `Databases`, `Jdbc` |
-| `utils` | статические утилиты без состояния: `RandomDataUtils` — случайные username/password; сюда же будущие генераторы (описания фото и т.п.) |
+| `config` | `TestConfig` и `PlaywrightOptionsFactory` |
+| `jupiter` | интеграция с JUnit: `annotation` (`@User`, `@ProbeTarget`), `extension` (`UserExtension`), `condition` (`ProbeTargetCondition`), `probe` (`UserExtensionTest`) |
+| `data` | `TestUser`, `UserRequest`, `UserFixture`, `TearDown`, `SingleUserFixture` и декораторы `UserWithFriendsFixture`, `UserWithIncomeInvitations`, `UserWithOutcomeInvitationsFixture` |
+| `data.db` | `Databases`, `Jdbc`, а также модели и операции для профилей, учётных записей и связей |
+| `utils` | `RandomDataUtils` — генерация тестовых имён и паролей |
 | `ui` | `page` — Page Objects, `component` — общие части страниц |
-| `test` | только тесты, по фичам: `auth`, `profile`, позже `people`, … |
+| `test` | тесты в корневом пакете и по фичам: `auth`, `people`, `profile` |
 
-Правила: в `jupiter` нет SQL и локаторов; в `data` нет JUnit; в `test` нет локаторов и SQL; `ThreadLocal` для состояния теста не используется — состояние живёт в Store расширения.
+Правила: в `jupiter` нет SQL и локаторов; в `data` нет JUnit; в `test` нет локаторов и SQL; `ThreadLocal` для состояния теста не используется — фикстуры хранятся в Store расширения.
 
 ## Агент
 
-Page Objects пишет Claude Code по skill `rfr-page-objects`; UI исследуется через Playwright MCP (`.mcp.json`).
+При изменении Page Objects следуй `.claude/skills/rfr-page-objects/SKILL.md`. UI-локаторы проверяются в браузере через Playwright MCP.
 
-Доказательство корректности теста - запуск gradle таски.
+Подтверждение результата теста — запуск соответствующей Gradle-задачи.
