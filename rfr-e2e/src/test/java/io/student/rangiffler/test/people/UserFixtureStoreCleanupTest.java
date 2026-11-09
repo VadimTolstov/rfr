@@ -24,7 +24,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Execution(ExecutionMode.SAME_THREAD)
 public final class UserFixtureStoreCleanupTest {
-  private final UserFixture target = new UserRequest(0, 0).fixture();
+  private final UserFixture target = new UserRequest(0, 0, 0).fixture();
 
   @BeforeAll
   void createTarget() {
