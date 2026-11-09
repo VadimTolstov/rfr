@@ -1,11 +1,5 @@
-package io.student.rangiffler.jupiter.request;
+package io.student.rangiffler.data;
 
-import io.student.rangiffler.data.TestUser;
-import io.student.rangiffler.data.SingleUserFixture;
-import io.student.rangiffler.data.UserFixture;
-import io.student.rangiffler.data.UserWithFriendsFixture;
-import io.student.rangiffler.data.UserWithIncomeInvitations;
-import io.student.rangiffler.data.UserWithOutcomeInvitationsFixture;
 import io.student.rangiffler.jupiter.annotation.User;
 import java.util.List;
 import java.util.stream.Stream;

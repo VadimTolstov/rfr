@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 @UsePlaywright(PlaywrightOptionsFactory.class)
 public final class UserFixturePreconditionsTest {
   @Test
-  @DisplayName("Пользователь отображает заданное количество друзей и входящих заявок")
-  void shouldDisplayConfiguredFriendsAndIncomeInvitations(@User(friends = 2, incomeInvitations = 2) TestUser user, Page page) {
+  @DisplayName("Пользователь отображает друга и входящую заявку")
+  void shouldDisplayConfiguredFriendsAndIncomeInvitations(@User(friends = 1, incomeInvitations = 1) TestUser user, Page page) {
     new LoginPage(page)
         .open()
         .clickLogin()
@@ -21,8 +21,8 @@ public final class UserFixturePreconditionsTest {
         .clickSignIn()
         .clickPeople()
         .clickFriendsTab()
-        .checkThatFriendsCount(2)
+        .checkThatFriendsCount(1)
         .clickIncomeInvitationsTab()
-        .checkThatIncomeInvitationsCount(2);
+        .checkThatIncomeInvitationsCount(1);
   }
 }

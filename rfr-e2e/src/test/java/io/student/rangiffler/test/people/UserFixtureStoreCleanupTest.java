@@ -6,7 +6,7 @@ import io.student.rangiffler.config.PlaywrightOptionsFactory;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.UserFixture;
 import io.student.rangiffler.jupiter.annotation.User;
-import io.student.rangiffler.jupiter.request.UserRequest;
+import io.student.rangiffler.data.UserRequest;
 import io.student.rangiffler.ui.page.LoginPage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
