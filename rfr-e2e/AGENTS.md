@@ -11,8 +11,10 @@
 ```
 
 ## Правила тестов
-- JUnit Jupiter 6.1.3: `@ExtendWith(PageFixture.class)` + `@RegisterExtension UserExtension`.
-- Данные — только `@User TestUser user` (БД, `CloseableResource`), не хардкод.
+- На классах тестов используй `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright предоставляет `Page` как параметр теста.
+- Аннотация параметра `@User TestUser user` подключает `UserExtension` и создаёт тестовые данные через `UserRequest` и композицию `UserFixture`.
+- `UserFixture` реализует `AutoCloseable`; JUnit закрывает фикстуру из Store благодаря `junit.jupiter.extensions.store.close.autocloseable.enabled=true` в `junit-platform.properties`.
+- Данные создавай через `@User`, не хардкодь пользователей или связи.
 - Fluent-цепочка, без `Allure.step` вокруг всего теста.
 - `@DisplayName` для названий.
 ## Запрещено

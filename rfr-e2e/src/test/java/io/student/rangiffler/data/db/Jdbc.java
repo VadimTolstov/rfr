@@ -34,4 +34,10 @@ public final class Jdbc {
       throw new IllegalStateException("Failed to load SQL resource: " + filePath, exception);
     }
   }
+
+  public static void requireOneRow(int rows, String operation) {
+    if (rows != 1) {
+      throw new IllegalStateException("Expected one row for " + operation + " but got " + rows);
+    }
+  }
 }
