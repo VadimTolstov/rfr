@@ -27,6 +27,7 @@ dist/
 
 # Logs
 *.log
+*.bak
 
 # OS
 .DS_Store
@@ -35,7 +36,11 @@ Thumbs.db
 # Local agent notes
 AGENTS.md
 docs/
+!docs/
+docs/*
+!docs/hooks-java.log
+!docs/hooks-tsx.log
 .playwright-mcp/
 MEMORY.md
 .gigacode/
-*.bak
+promts/

@@ -189,7 +189,7 @@ OAuth-авторизации, consent и ключи в БД не хранятс�
 
 ```bash
 # из корня проекта: MySQL в Docker
-# внимание: localenv.sh останавливает и удаляет ВСЕ docker-контейнеры на машине
+# localenv.sh пересоздаёт только контейнер rfr-mysql через docker compose; данные в volume mysql-volume сохраняются
 bash localenv.sh
 
 cd rfr-auth
