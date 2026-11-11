@@ -1,4 +1,4 @@
-package io.student.rangiffler.jupiter.extension;
+package io.student.rangiffler;
 
 import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.data.db.Databases;
@@ -6,11 +6,20 @@ import io.student.rangiffler.data.db.Migrations;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.suite.api.BeforeSuite;
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.IncludeTags;
+import org.junit.platform.suite.api.SelectPackages;
+import org.junit.platform.suite.api.Suite;
 
-public final class StandSchemaExtension implements SuiteExtension {
-    @Override
-    public void beforeSuite(ExtensionContext context) {
+/** Checks the stand schema before running UI tests. */
+@Suite
+@SelectPackages("io.student.rangiffler.test")
+@IncludeTags("ui")
+@IncludeEngines("junit-jupiter")
+public final class StandSuiteTest {
+    @BeforeSuite
+    static void validateMigrations() {
         if (TestConfig.migrationCheck()) {
             List<String> mismatches = Stream.of(
                             new Migrations(Databases.AUTH, TestConfig.authMigrations()),

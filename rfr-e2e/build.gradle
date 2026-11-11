@@ -38,6 +38,7 @@ dependencies {
     testRuntimeOnly "com.mysql:mysql-connector-j"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation "org.junit.platform:junit-platform-suite"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.junit.platform:junit-platform-testkit"
     testRuntimeOnly "org.aspectj:aspectjrt:$aspectJVersion"
@@ -66,7 +67,9 @@ tasks.withType(Test).configureEach {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
     doFirst {
         if (filter.commandLineIncludePatterns.empty) {
             options { excludeTags 'ui' }
@@ -97,7 +100,7 @@ tasks.register('e2e', Test) {
     classpath = sourceSets.test.runtimeClasspath
     systemProperty 'rfr.migrationCheck', 'true'
     useJUnitPlatform {
-        includeTags 'ui'
+        includeEngines 'junit-platform-suite'
     }
     dependsOn waitForStand
 }
