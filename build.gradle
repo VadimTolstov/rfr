@@ -47,7 +47,7 @@ tasks.register('runAll') {
 tasks.register('e2e') {
     group = 'verification'
     description = 'Runs rfr-e2e tests'
-    dependsOn ':rfr-e2e:test'
+    dependsOn ':rfr-e2e:e2e'
 }
 
 tasks.withType(JavaCompile).configureEach {

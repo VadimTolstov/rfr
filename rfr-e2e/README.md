@@ -5,30 +5,41 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 ## Запуск
 
 ```bash
-./gradlew :rfr-e2e:installPlaywright                      # один раз: браузеры Playwright
-./gradlew :rfr-e2e:test --tests '*RegistrationTest'
-./gradlew :rfr-e2e:test --tests '*MainPageTest'
-./gradlew :rfr-e2e:test --tests '*FriendsTabTest' --tests '*IncomeInvitationsTabTest' --tests '*OutcomeInvitationsTabTest'
+./gradlew :rfr-e2e:installPlaywright
+./gradlew :rfr-e2e:test
 ./gradlew :rfr-e2e:test --tests '*UserExtensionTest'
-./gradlew :rfr-e2e:allureReport                           # rfr-e2e/build/reports/allure-report/allureReport/index.html
+./gradlew :rfr-e2e:test --tests '*RegistrationTest'
+./gradlew e2e
+./gradlew :rfr-e2e:allureReport
 ```
 
-Стенд: MySQL `:3306`, `rfr-auth :9001`, `rfr-api :8081`, фронт `:3001` (см. корневой README).
+Отчёт Allure: `rfr-e2e/build/reports/allure-report/allureReport/index.html`.
+
+Задача `:rfr-e2e:test` по умолчанию исключает тесты с тегом `ui`. Если задан фильтр `--tests`, выбранный UI-тест запускается напрямую и требует работающего стенда.
+
+Задача `e2e` запускает только UI-тесты. Перед запуском она ждёт до 180 секунд доступности MySQL `:3306`, `rfr-auth :9001`, `rfr-api :8081` и фронтенда `:3001`, затем проверяет миграции. Сервисы должны быть запущены заранее; задача ожидания не поднимает и не перезапускает их. Скрипт `scripts/wait-for-stand.sh` принимает `WAIT_TIMEOUT` для настройки общего таймаута.
+
+На Windows Gradle выбирает Bash из `RFR_BASH`, затем системного свойства `rfr.bash`, затем Git Bash в стандартных каталогах. Если Bash не найден в этих местах, используется `bash` из `PATH`. В Linux используется `bash` из `PATH`.
 
 ## Конфигурация
 
-`TestConfig` проверяет системное свойство тестовой JVM, затем переменную окружения и затем значение по умолчанию. Для запуска через Gradle используй переменные окружения: параметры `-Drfr.*`, переданные Gradle, не настроены на передачу в тестовую JVM. Например, `rfr.authDbUrl` соответствует `RFR_AUTH_DB_URL`.
+`TestConfig` проверяет системное свойство, затем переменную окружения и затем значение по умолчанию. Gradle передаёт системные свойства `rfr.*` из JVM сборки в тестовую JVM. Например, `rfr.authUrl` соответствует `RFR_AUTH_URL`.
 
-| Ключ | По умолчанию |
-|---|---|
-| `rfr.frontUrl` | `http://localhost:3001` |
-| `rfr.authUrl` | `http://localhost:9001` |
-| `rfr.apiUrl` | `http://localhost:8081` |
-| `rfr.authDbUrl` | `jdbc:mysql://localhost:3306/rangiffler-auth` |
-| `rfr.apiDbUrl` | `jdbc:mysql://localhost:3306/rangiffler-api` |
-| `rfr.dbUser` / `rfr.dbPassword` | `root` / `secret` |
+| Системное свойство | Переменная окружения | По умолчанию |
+|---|---|---|
+| `rfr.frontUrl` | `RFR_FRONT_URL` | `http://localhost:3001` |
+| `rfr.authUrl` | `RFR_AUTH_URL` | `http://localhost:9001` |
+| `rfr.apiUrl` | `RFR_API_URL` | `http://localhost:8081` |
+| `rfr.dbUrl` | `RFR_DB_URL` | `jdbc:mysql://localhost:3306` |
+| `rfr.dbUser` | `RFR_DB_USER` | `root` |
+| `rfr.dbPassword` | `RFR_DB_PASSWORD` | `secret` |
+| `rfr.migrationCheck` | `RFR_MIGRATION_CHECK` | `false` |
+| `rfr.authMigrations` | `RFR_AUTH_MIGRATIONS` | `../rfr-auth/src/main/resources/db/migration/rangiffler-auth` |
+| `rfr.apiMigrations` | `RFR_API_MIGRATIONS` | `../rfr-api/src/main/resources/db/migration/rangiffler-api` |
+| `rfr.browser` | `RFR_BROWSER` | `chromium` |
+| `rfr.headless` | `RFR_HEADLESS` | `true` |
 
-Браузерные параметры не читаются из `TestConfig`: `PlaywrightOptionsFactory` включает headless-режим и задаёт локаль `en-US`.
+`dbUrl` задаёт базовый JDBC URL; конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `PlaywrightOptionsFactory` применяет настройки `browser` и `headless`; локаль контекста — `en-US`.
 
 ## Архитектура
 
@@ -39,7 +50,7 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `config` | `TestConfig` и `PlaywrightOptionsFactory` |
 | `jupiter` | интеграция с JUnit: `annotation` (`@User`, `@ProbeTarget`), `extension` (`UserExtension`), `condition` (`ProbeTargetCondition`), `probe` (`UserExtensionTest`) |
 | `data` | `TestUser`, `UserRequest`, `UserFixture`, `TearDown`, `SingleUserFixture` и декораторы `UserWithFriendsFixture`, `UserWithIncomeInvitations`, `UserWithOutcomeInvitationsFixture` |
-| `data.db` | `Databases`, `Jdbc`, а также модели и операции для профилей, учётных записей и связей |
+| `data.db` | `Databases` с ленивыми Hikari-пулами (максимум четыре соединения на схему), `Jdbc`, модели и операции для профилей, учётных записей и связей |
 | `utils` | `RandomDataUtils` — генерация тестовых имён и паролей |
 | `ui` | `page` — Page Objects, `component` — общие части страниц |
 | `test` | тесты в корневом пакете и по фичам: `auth`, `people`, `profile` |

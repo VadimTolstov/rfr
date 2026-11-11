@@ -8,7 +8,8 @@ public final class PlaywrightOptionsFactory implements OptionsFactory {
   @Override
   public Options getOptions() {
     return new Options()
-        .setHeadless(true)
+        .setBrowserName(TestConfig.browser())
+        .setHeadless(TestConfig.headless())
         .setContextOptions(new Browser.NewContextOptions().setLocale("en-US"));
   }
 }

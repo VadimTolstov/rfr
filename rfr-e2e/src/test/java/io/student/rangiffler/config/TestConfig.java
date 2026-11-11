@@ -1,28 +1,64 @@
 package io.student.rangiffler.config;
 
-public interface TestConfig {
-  String FRONTEND_URL = getProperty("rfr.frontUrl", "http://localhost:3001");
-  String AUTH_URL = getProperty("rfr.authUrl", "http://localhost:9001");
-  String API_URL = getProperty("rfr.apiUrl", "http://localhost:8081");
-  String AUTH_DB_URL = getProperty("rfr.authDbUrl", "jdbc:mysql://localhost:3306/rangiffler-auth");
-  String API_DB_URL = getProperty("rfr.apiDbUrl", "jdbc:mysql://localhost:3306/rangiffler-api");
-  String DB_USERNAME = getProperty("rfr.dbUser", "root");
-  String DB_PASSWORD = getProperty("rfr.dbPassword", "secret");
+import java.util.Locale;
 
-  private static String getProperty(String key, String defaultValue) {
-    String systemProperty = System.getProperty(key);
-    if (systemProperty != null && !systemProperty.isBlank()) {
-      return systemProperty;
+public final class TestConfig {
+  private TestConfig() {
+  }
+
+  public static String frontUrl() {
+    return value("frontUrl", "http://localhost:3001");
+  }
+
+  public static String authUrl() {
+    return value("authUrl", "http://localhost:9001");
+  }
+
+  public static String apiUrl() {
+    return value("apiUrl", "http://localhost:8081");
+  }
+
+  public static String dbUrl(String schema) {
+    return value("dbUrl", "jdbc:mysql://localhost:3306") + "/" + schema + "?serverTimezone=UTC";
+  }
+
+  public static String dbUser() {
+    return value("dbUser", "root");
+  }
+
+  public static String dbPassword() {
+    return value("dbPassword", "secret");
+  }
+
+  public static boolean migrationCheck() {
+    return Boolean.parseBoolean(value("migrationCheck", "false"));
+  }
+
+  public static String authMigrations() {
+    return value("authMigrations", "../rfr-auth/src/main/resources/db/migration/rangiffler-auth");
+  }
+
+  public static String apiMigrations() {
+    return value("apiMigrations", "../rfr-api/src/main/resources/db/migration/rangiffler-api");
+  }
+
+  public static String browser() {
+    return value("browser", "chromium");
+  }
+
+  public static boolean headless() {
+    return Boolean.parseBoolean(value("headless", "true"));
+  }
+
+  static String value(String key, String fallback) {
+    String property = System.getProperty("rfr." + key);
+    if (property != null && !property.isBlank()) {
+      return property;
     }
-
-    String envKey = key.replaceAll("([a-z0-9])([A-Z])", "$1_$2")
-        .toUpperCase()
-        .replace('.', '_');
-    String environmentVariable = System.getenv(envKey);
-    if (environmentVariable != null) {
-      return environmentVariable;
+    String variable = System.getenv("RFR_" + key.replaceAll("([A-Z])", "_$1").toUpperCase(Locale.ROOT));
+    if (variable != null && !variable.isBlank()) {
+      return variable;
     }
-
-    return defaultValue;
+    return fallback;
   }
 }

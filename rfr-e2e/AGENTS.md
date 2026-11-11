@@ -7,8 +7,13 @@
 ```bash
 ./gradlew :rfr-e2e:test
 ./gradlew :rfr-e2e:test --tests '<Тест>'
+./gradlew e2e
 ./gradlew :rfr-e2e:installPlaywright
 ```
+
+`:rfr-e2e:test` исключает тесты с тегом `ui`, если запуск не ограничен фильтром `--tests`. `e2e` ждёт доступности сервисов, проверяет миграции и запускает только тесты с тегом `ui`; ожидание не поднимает сервисы.
+
+`scripts/wait-for-stand.sh` проверяет MySQL, auth, API и фронтенд. Таймаут по умолчанию — 180 секунд. На Windows Bash выбирается из `RFR_BASH`, системного свойства `rfr.bash`, стандартных каталогов Git Bash или `PATH`.
 
 ## Правила тестов
 - На классах тестов используй `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright предоставляет `Page` как параметр теста.
