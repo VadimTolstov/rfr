@@ -38,7 +38,6 @@ dependencies {
     testRuntimeOnly "com.mysql:mysql-connector-j"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
-    testImplementation "org.junit.platform:junit-platform-suite"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.junit.platform:junit-platform-testkit"
     testRuntimeOnly "org.aspectj:aspectjrt:$aspectJVersion"
@@ -96,12 +95,10 @@ tasks.register('e2e', Test) {
     description = 'Runs UI tests against a running stand'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
-    include '**/RangifflerE2ESuite.class'
-    filter {
-        includeTestsMatching 'io.student.rangiffler.RangifflerE2ESuite'
-    }
     systemProperty 'rfr.migrationCheck', 'true'
-    useJUnitPlatform()
+    useJUnitPlatform {
+        includeTags 'ui'
+    }
     dependsOn waitForStand
 }
 
