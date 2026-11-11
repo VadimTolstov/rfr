@@ -6,11 +6,17 @@ import io.student.rangiffler.data.db.Migrations;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.launcher.LauncherSession;
+import org.junit.platform.launcher.LauncherSessionListener;
 
-public final class StandSchemaExtension implements SuiteExtension {
+/** Validates stand migrations when a launcher session opens. */
+public final class StandSchemaExtension implements LauncherSessionListener {
     @Override
-    public void beforeSuite(ExtensionContext context) {
+    public void launcherSessionOpened(LauncherSession session) {
+        System.getLogger("io.student.rangiffler.jupiter.extension.StandSchemaExtension").log(
+                System.Logger.Level.INFO,
+                "Launcher session opened for migration validation, pid={0}, migrationCheck={1}",
+                Long.toString(ProcessHandle.current().pid()), TestConfig.migrationCheck());
         if (TestConfig.migrationCheck()) {
             List<String> mismatches = Stream.of(
                             new Migrations(Databases.AUTH, TestConfig.authMigrations()),
