@@ -40,6 +40,8 @@ docs/
 docs/*
 !docs/hooks-java.log
 !docs/hooks-tsx.log
+!docs/hw4/
+!docs/hw4/**
 .playwright-mcp/
 MEMORY.md
 .gigacode/
