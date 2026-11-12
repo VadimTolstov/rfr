@@ -42,6 +42,9 @@ public final class TestConfig {
     return value("dbPassword", "secret");
   }
 
+  public static boolean environmentDb() {
+    return Boolean.parseBoolean(value("environmentDb", "false"));
+  }
   public static boolean migrationCheck() {
     return Boolean.parseBoolean(value("migrationCheck", "false"));
   }

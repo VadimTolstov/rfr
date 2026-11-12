@@ -25,9 +25,7 @@ public final class AllureEnvironmentExtension implements SuiteExtension {
         environment.setProperty("commit", setting(context, "commit", TestConfig::commit));
         for (Databases database : Databases.values()) {
             environment.setProperty("migration." + database.schema(),
-                    new FlywaySchemaVersion(setting(context, "dbUrl", TestConfig::dbUrl),
-                            setting(context, "dbUser", TestConfig::dbUser),
-                            setting(context, "dbPassword", TestConfig::dbPassword), database.schema()).value());
+                    version(context, database));
         }
         Path directory = Path.of(context.getConfigurationParameter("allure.results.directory")
                 .orElseGet(() -> System.getProperty("allure.results.directory", "rfr-e2e/build/allure-results")));
@@ -41,6 +39,13 @@ public final class AllureEnvironmentExtension implements SuiteExtension {
         }
     }
 
+    private String version(ExtensionContext context, Databases database) {
+        return Boolean.parseBoolean(setting(context, "environmentDb", () -> Boolean.toString(TestConfig.environmentDb())))
+                ? new FlywaySchemaVersion(setting(context, "dbUrl", TestConfig::dbUrl),
+                        setting(context, "dbUser", TestConfig::dbUser),
+                        setting(context, "dbPassword", TestConfig::dbPassword), database.schema()).value()
+                : "unavailable";
+    }
     private String setting(ExtensionContext context, String name, Supplier<String> fallback) {
         return context.getConfigurationParameter("rfr." + name).orElseGet(fallback);
     }

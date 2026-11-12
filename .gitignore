@@ -38,8 +38,8 @@ AGENTS.md
 docs/
 !docs/
 docs/*
-!docs/hooks-java.log
-!docs/hooks-tsx.log
+!docs/hw4/hooks-java.log
+!docs/hw4/hooks-tsx.log
 !docs/hw4/
 !docs/hw4/**
 .playwright-mcp/

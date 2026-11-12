@@ -7,6 +7,7 @@ import io.student.rangiffler.jupiter.extension.SuiteExtension;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -32,6 +36,21 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 /** Verifies environment publication and callback ordering through the Jupiter engine. */
 @NullMarked
 final class AllureEnvironmentExtensionTest {
+    @Test
+    @DisplayName("По умолчанию окружение записывается без подключений к MySQL")
+    void shouldWriteEnvironmentWithoutDatabaseByDefault(@TempDir Path directory) throws IOException {
+        try (ConnectionCounter database = new ConnectionCounter()) {
+            database.start();
+            EngineExecutionResults results = run(SuccessTargetTest.class, directory,
+                    Map.of("rfr.dbUrl", database.address()));
+            Properties environment = environment(directory);
+            assertEquals(Map.of("tests", 1L, "connections", 0, "auth", "unavailable", "api", "unavailable"),
+                    Map.of("tests", results.testEvents().succeeded().count(), "connections", database.connections(),
+                            "auth", environment.getProperty("migration.rangiffler-auth", "missing"),
+                            "api", environment.getProperty("migration.rangiffler-api", "missing")));
+        }
+    }
+
     @Test
     @DisplayName("После прогона environment.properties содержит все ключи")
     void writesEnvironmentAfterRun(@TempDir Path directory) throws IOException {
@@ -64,13 +83,27 @@ final class AllureEnvironmentExtensionTest {
             port = socket.getLocalPort();
         }
         assertEquals(1, run(SuccessTargetTest.class, directory,
-                Map.of("rfr.dbUrl", "jdbc:mysql://127.0.0.1:" + port)).testEvents().succeeded().count());
+                Map.of("rfr.dbUrl", "jdbc:mysql://127.0.0.1:" + port, "rfr.environmentDb", "true")).testEvents().succeeded().count());
         Properties environment = environment(directory);
         assertEquals("unavailable", environment.getProperty("migration.rangiffler-auth"));
         assertEquals("unavailable", environment.getProperty("migration.rangiffler-api"));
         assertTrue(environment.containsKey("frontUrl"));
     }
 
+    @Test
+    @DisplayName("Включённое чтение версий обращается к MySQL и сохраняет unavailable при ошибке")
+    void shouldReadDatabaseWhenEnabled(@TempDir Path directory) throws IOException {
+        try (ConnectionCounter database = new ConnectionCounter()) {
+            database.start();
+            EngineExecutionResults results = run(SuccessTargetTest.class, directory,
+                    Map.of("rfr.dbUrl", database.address(), "rfr.environmentDb", "true"));
+            Properties environment = environment(directory);
+            assertEquals(Map.of("tests", 1L, "connected", true, "auth", "unavailable", "api", "unavailable"),
+                    Map.of("tests", results.testEvents().succeeded().count(), "connected", database.connections() > 0,
+                            "auth", environment.getProperty("migration.rangiffler-auth", "missing"),
+                            "api", environment.getProperty("migration.rangiffler-api", "missing")));
+        }
+    }
     private EngineExecutionResults run(Class<?> target, Path directory, Map<String, String> parameters) {
         return EngineTestKit.engine("junit-jupiter").selectors(selectClass(target))
                 .configurationParameter(ProbeTargetCondition.PARAMETER, "true")
@@ -90,6 +123,56 @@ final class AllureEnvironmentExtensionTest {
             environment.load(input);
         }
         return environment;
+    }
+
+    /** Counts real TCP connections without implementing the MySQL protocol. */
+    static final class ConnectionCounter implements AutoCloseable {
+        private final ServerSocket socket;
+        private final AtomicInteger connections;
+        private final ExecutorService executor;
+
+        ConnectionCounter() throws IOException {
+            this(new ServerSocket(0), new AtomicInteger(), Executors.newVirtualThreadPerTaskExecutor());
+        }
+
+        private ConnectionCounter(ServerSocket socket, AtomicInteger connections, ExecutorService executor) {
+            this.socket = socket;
+            this.connections = connections;
+            this.executor = executor;
+        }
+
+        void start() {
+            executor.execute(() -> {
+                try {
+                    while (!socket.isClosed()) {
+                        try (Socket _ = socket.accept()) {
+                            connections.incrementAndGet();
+                        }
+                    }
+                } catch (IOException failure) {
+                    if (!socket.isClosed()) {
+                        throw new UncheckedIOException("Cannot count database connections", failure);
+                    }
+                }
+            });
+        }
+
+        String address() {
+            return "jdbc:mysql://127.0.0.1:" + socket.getLocalPort();
+        }
+
+        int connections() {
+            return connections.get();
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                socket.close();
+            } finally {
+                executor.shutdownNow();
+            }
+        }
     }
 
     /** Allows a successful engine run without UI or database fixtures. */

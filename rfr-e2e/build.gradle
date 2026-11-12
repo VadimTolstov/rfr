@@ -104,6 +104,7 @@ tasks.register('e2e', Test) {
     classpath = sourceSets.test.runtimeClasspath
     systemProperty 'rfr.migrationCheck', 'true'
     systemProperty 'rfr.standCheck', 'true'
+    systemProperty 'rfr.environmentDb', 'true'
     useJUnitPlatform {
         includeTags 'ui'
     }
