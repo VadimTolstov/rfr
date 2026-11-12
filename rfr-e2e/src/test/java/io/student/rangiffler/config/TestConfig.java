@@ -62,6 +62,10 @@ public final class TestConfig {
     return Boolean.parseBoolean(value("headless", "true"));
   }
 
+  public static String commit() {
+    return value("commit", "unavailable");
+  }
+
   static String value(String key, String fallback) {
     String property = System.getProperty("rfr." + key);
     if (property != null && !property.isBlank()) {

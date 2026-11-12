@@ -41,6 +41,7 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `rfr.apiMigrations` | `RFR_API_MIGRATIONS` | `../rfr-api/src/main/resources/db/migration/rangiffler-api` |
 | `rfr.browser` | `RFR_BROWSER` | `chromium` |
 | `rfr.headless` | `RFR_HEADLESS` | `true` |
+| `rfr.commit` | `RFR_COMMIT` | `unavailable` при запуске вне Gradle |
 
 `dbUrl` задаёт базовый JDBC URL; конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `PlaywrightOptionsFactory` применяет настройки `browser` и `headless`; локаль контекста — `en-US`.
 
@@ -108,3 +109,40 @@ API намеренно принимает и HTTP-ошибку: исходная
 ```
 
 Проверено 2026-11-11: все пять проверок `StandReadinessExtensionTest`, обычная задача `test` и 16 UI-тестов `e2e` прошли. `check-code.bat` и проверки новых классов в IDEA завершились без ошибок и предупреждений. Итоговый лог Gradle: `build/verification/readiness/final.log`; задачи `waitForStand` в нём нет.
+
+## Окружение в Allure
+
+`AllureEnvironmentExtension` реализует `SuiteExtension` и пишет `environment.properties` в `afterSuite`. Каталог задаётся системным свойством `allure.results.directory`; без него используется `rfr-e2e/build/allure-results` относительно рабочей директории. Gradle-плагин Allure передаёт абсолютный каталог результатов. Для собственного запуска из IDE при необходимости задайте абсолютный путь явно.
+
+| Ключ | Источник |
+|---|---|
+| `frontUrl`, `authUrl`, `apiUrl` | `TestConfig` |
+| `browser`, `headless` | `TestConfig` |
+| `commit` | Короткий хеш HEAD, полученный Gradle через `git rev-parse --short HEAD` и переданный как `rfr.commit` |
+| `migration.rangiffler-auth` | Текущая применённая версия auth-схемы из `Flyway.info().current()` |
+| `migration.rangiffler-api` | Текущая применённая версия API-схемы из `Flyway.info().current()` |
+
+Тестовый Java-код не запускает Git. При переданном вручную `-Drfr.commit=...` Gradle сохраняет это значение. Версии читаются отдельными подключениями с JDBC `connectTimeout=1000` и `socketTimeout=1000`, без повторных подключений Flyway и без Hikari-пулов фикстур. Если схему прочитать нельзя, записывается `unavailable`; если история не содержит текущей версионной миграции — `none`. Учётные данные в отчёт не попадают. Ошибка записи самого файла выбрасывается, а не скрывается.
+
+### Почему расширение зарегистрировано первым
+
+Порядок в одном service-файле: **AllureEnvironmentExtension → StandReadinessExtension → StandSchemaExtension**. Эксперимент `AllureEnvironmentExtensionTest` подтверждает: когда `beforeSuite` другой реализации падает, Jupiter прекращает цепочку `beforeAll`, следующий callback не вызывается и тела тестов не выполняются. Поэтому последняя регистрация окружения не гарантировала бы вызов его `afterSuite`.
+
+Первая регистрация успевает поместить свой `SuiteRun` в корневой `ExtensionContext.Store` до проверки готовности и миграций. JUnit закрывает Store и вызывает `SuiteRun.close()` даже после ошибки подготовки; тот вызывает `AllureEnvironmentExtension.afterSuite`. Это гарантирует запись и после ошибки другого `beforeSuite`, пока процесс JVM штатно завершает работу JUnit. При аварийном завершении JVM callbacks не гарантируются.
+
+Проверки `EngineTestKit` через мишени `@ProbeTarget`: файл после успешного прогона содержит все восемь ключей; после упавшего `beforeSuite` файл тоже существует, а следующий before-callback не вызван; недоступная MySQL даёт две версии `unavailable` и не мешает записи. В тестах готовности стенда автозагрузка этого расширения исключена для изоляции: получение метаданных не должно добавлять сетевые запросы к измерению таймаута readiness.
+
+```bash
+./gradlew :rfr-e2e:test --tests '*AllureEnvironmentExtensionTest'
+./gradlew allureServe
+```
+
+### Скриншот для PR и результаты проверки
+
+В используемом **Allure Report 3.17.0** файл окружения отображается в блоке **Metadata**, который соответствует Environment из Allure 2. Это штатное [отображение environment.properties в Allure 3](https://allurereport.org/docs/environments/), а не отдельная конфигурация нескольких окружений. Поле `executor` добавляет Gradle-плагин.
+
+![Окружение прогона в Allure Serve](docs/allure-environment.png)
+
+Скриншот сделан через браузер из отчёта, запущенного командой `./gradlew allureServe`; на нём хеш `e39acf2`, обе версии схем — `1`. Для PR можно использовать изображение `rfr-e2e/docs/allure-environment.png` вместе с объяснением порядка выше.
+
+Проверено 2026-11-12: три новых теста прошли, обычная задача `:rfr-e2e:test` прошла, компиляция через `check-code.bat` успешна. Полный `e2e` остановился до выполнения UI-тестов: `StandReadinessExtension` не дождался `rfr-gql-client` за 180 секунд. После этого реального сбоя подготовки `environment.properties` всё равно появился с хешем и обеими версиями схем. Успешное прохождение всего UI-набора в этой проверке не подтверждено. Отчёт Allure использовал существующий каталог результатов с предыдущими запусками; его общая статистика не является результатом одного текущего прогона.

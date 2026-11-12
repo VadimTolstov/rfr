@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
+import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
 import io.student.rangiffler.jupiter.extension.StandSchemaExtension;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -92,6 +93,8 @@ final class StandReadinessExtensionTest {
                 .selectors(selectClass(ReadinessTargetTest.class))
                 .configurationParameter(ProbeTargetCondition.PARAMETER, "true")
                 .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+                .configurationParameter("junit.jupiter.extensions.autodetection.exclude",
+                        AllureEnvironmentExtension.class.getName())
                 .configurationParameters(parameters)
                 .execute();
     }
