@@ -9,8 +9,10 @@ import io.student.rangiffler.ui.page.LoginPage;
 import io.student.rangiffler.utils.RandomDataUtils;
 import java.nio.file.Path;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("ui")
 @UsePlaywright(PlaywrightOptionsFactory.class)
 public final class ProfileTest {
   @Test

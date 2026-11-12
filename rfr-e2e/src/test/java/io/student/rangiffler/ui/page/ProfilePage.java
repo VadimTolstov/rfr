@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 
 public final class ProfilePage {
-  public static final String URL = TestConfig.FRONTEND_URL + "/profile";
+  public static final String URL = TestConfig.frontUrl() + "/profile";
 
   private final Page page;
   private final Locator firstNameInput;
