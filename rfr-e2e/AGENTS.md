@@ -13,7 +13,7 @@
 
 `:rfr-e2e:test` исключает тесты с тегом `ui`, если запуск не ограничен фильтром `--tests`. `e2e` ждёт доступности сервисов, проверяет миграции и запускает только тесты с тегом `ui`; ожидание не поднимает сервисы.
 
-`scripts/wait-for-stand.sh` проверяет MySQL, auth, API и фронтенд. Таймаут по умолчанию — 180 секунд. На Windows Bash выбирается из `RFR_BASH`, системного свойства `rfr.bash`, стандартных каталогов Git Bash или `PATH`.
+`StandReadinessExtension` ждёт MySQL, auth, API и фронтенд до `rfr.standTimeout` (по умолчанию 180 секунд), если включён `rfr.standCheck`. В `e2e` проверка включена; в обычном `test` и прямом JUnit-запуске из IDE по умолчанию выключена. Для UI-запуска из IDE задай `-Drfr.standCheck=true`. Расширение зарегистрировано перед `StandSchemaExtension` в одном service-файле. `e2e` не зависит от Bash-задачи `waitForStand`; она сохранена для ручного запуска скрипта.
 
 ## Правила тестов
 - На классах тестов используй `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright предоставляет `Page` как параметр теста.

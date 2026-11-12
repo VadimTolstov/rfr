@@ -19,7 +19,19 @@ public final class TestConfig {
   }
 
   public static String dbUrl(String schema) {
-    return value("dbUrl", "jdbc:mysql://localhost:3306") + "/" + schema + "?serverTimezone=UTC";
+    return dbUrl() + "/" + schema + "?serverTimezone=UTC";
+  }
+
+  public static String dbUrl() {
+    return value("dbUrl", "jdbc:mysql://localhost:3306");
+  }
+
+  public static boolean standCheck() {
+    return Boolean.parseBoolean(value("standCheck", "false"));
+  }
+
+  public static long standTimeout() {
+    return Long.parseLong(value("standTimeout", "180"));
   }
 
   public static String dbUser() {
