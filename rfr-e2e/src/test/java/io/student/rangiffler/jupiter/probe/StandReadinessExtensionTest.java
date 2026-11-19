@@ -5,6 +5,7 @@ import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
 import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
+import io.student.rangiffler.jupiter.extension.DatabasePoolsExtension;
 import io.student.rangiffler.jupiter.extension.StandSchemaExtension;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -118,10 +119,11 @@ final class StandReadinessExtensionTest {
     }
 
     @Test
-    @DisplayName("ServiceLoader регистрирует окружение, ожидание и сверку миграций в этом порядке")
+    @DisplayName("ServiceLoader регистрирует окружение и пулы до ожидания и сверки миграций")
     void registersSuiteExtensionsInOrder() {
         List<String> expected = List.of(AllureEnvironmentExtension.class.getName(),
-                StandReadinessExtension.class.getName(), StandSchemaExtension.class.getName());
+                DatabasePoolsExtension.class.getName(), StandReadinessExtension.class.getName(),
+                StandSchemaExtension.class.getName());
         assertEquals(expected, ServiceLoader.load(Extension.class).stream()
                 .map(provider -> provider.type().getName()).filter(expected::contains).toList());
     }

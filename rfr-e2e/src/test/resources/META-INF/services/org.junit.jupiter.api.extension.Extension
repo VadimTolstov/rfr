@@ -1,3 +1,4 @@
 io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension
+io.student.rangiffler.jupiter.extension.DatabasePoolsExtension
 io.student.rangiffler.jupiter.extension.StandReadinessExtension
 io.student.rangiffler.jupiter.extension.StandSchemaExtension

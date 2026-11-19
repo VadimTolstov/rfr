@@ -18,11 +18,11 @@ public enum Databases {
     this.schema = schema;
   }
 
-  public DataSource getDataSource() {
+  public synchronized DataSource getDataSource() {
     return dataSource;
   }
 
-  public PlatformTransactionManager getTransactionManager() {
+  public synchronized PlatformTransactionManager getTransactionManager() {
     return transactionManager;
   }
 
@@ -51,9 +51,12 @@ public enum Databases {
 
   public synchronized void close() {
     if (dataSource != null) {
-      dataSource.close();
-      dataSource = null;
-      transactionManager = null;
+      try {
+        dataSource.close();
+      } finally {
+        dataSource = null;
+        transactionManager = null;
+      }
     }
   }
 }

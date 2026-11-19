@@ -3,6 +3,7 @@ package io.student.rangiffler.jupiter.probe;
 import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
+import io.student.rangiffler.jupiter.extension.DatabasePoolsExtension;
 import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
 import io.student.rangiffler.jupiter.extension.StandSchemaExtension;
 import io.student.rangiffler.jupiter.extension.SuiteExtension;
@@ -121,7 +122,8 @@ final class AllureEnvironmentExtensionTest {
             parameters.put("rfr.authMigrations", directory.resolve("missing").toString());
             parameters.put("rfr.apiMigrations", directory.resolve("missing").toString());
             EngineExecutionResults results = run(ReadinessTimeoutTargetTest.class, directory, parameters,
-                    String.join(",", AllureEnvironmentExtension.class.getName(), StandReadinessExtension.class.getName(),
+                    String.join(",", AllureEnvironmentExtension.class.getName(), DatabasePoolsExtension.class.getName(),
+                            StandReadinessExtension.class.getName(),
                             StandSchemaExtension.class.getName()));
             assertEquals(0, results.testEvents().started().count());
             assertTrue(results.containerEvents().failed().stream()

@@ -17,6 +17,7 @@ import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.UserExtension;
+import io.student.rangiffler.jupiter.extension.DatabasePoolsExtension;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -134,6 +135,8 @@ public final class UserExtensionTest {
     return EngineTestKit.engine("junit-jupiter")
         .selectors(selectClass(target))
         .configurationParameter(ProbeTargetCondition.PARAMETER, Boolean.TRUE.toString())
+        .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+        .configurationParameter("junit.jupiter.extensions.autodetection.include", DatabasePoolsExtension.class.getName())
         .configurationParameter("junit.jupiter.extensions.store.close.autocloseable.enabled", Boolean.TRUE.toString())
         .execute();
   }

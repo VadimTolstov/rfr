@@ -127,7 +127,9 @@ API намеренно принимает и HTTP-ошибку: исходная
 
 ### Почему расширение зарегистрировано первым
 
-Порядок в одном service-файле: **AllureEnvironmentExtension → StandReadinessExtension → StandSchemaExtension**. Эксперимент `AllureEnvironmentExtensionTest` подтверждает: когда `beforeSuite` другой реализации падает, Jupiter прекращает цепочку `beforeAll`, следующий callback не вызывается и тела тестов не выполняются. Поэтому последняя регистрация окружения не гарантировала бы вызов его `afterSuite`.
+Порядок в одном service-файле: **AllureEnvironmentExtension → DatabasePoolsExtension → StandReadinessExtension → StandSchemaExtension**. Эксперимент `AllureEnvironmentExtensionTest` подтверждает: когда `beforeSuite` другой реализации падает, Jupiter прекращает цепочку `beforeAll`. Поэтому Allure и управление пулами регистрируют завершение до ожидания стенда и сверки миграций.
+
+`DatabasePoolsExtension` сохраняет один `PoolLease` в корневом Store каждого запуска Jupiter. Регистрация не создаёт пулы и не открывает соединения. Вложенные и параллельные запуски в одной JVM разделяют счётчик владельцев. Когда Jupiter закрывает последний `PoolLease`, расширение закрывает оба пула. Запуски `EngineTestKit`, использующие общие пулы и ограничивающие автоподключение, включают `DatabasePoolsExtension` в свой список.
 
 Первая регистрация успевает поместить свой `SuiteRun` в корневой `ExtensionContext.Store` до проверки готовности и миграций. JUnit закрывает Store и вызывает `SuiteRun.close()` даже после ошибки подготовки; тот вызывает `AllureEnvironmentExtension.afterSuite`. Это гарантирует запись и после ошибки другого `beforeSuite`, пока процесс JVM штатно завершает работу JUnit. При аварийном завершении JVM callbacks не гарантируются.
 
