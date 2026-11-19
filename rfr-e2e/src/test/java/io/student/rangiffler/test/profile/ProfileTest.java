@@ -2,7 +2,7 @@ package io.student.rangiffler.test.profile;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.junit.UsePlaywright;
-import io.student.rangiffler.config.PlaywrightOptionsFactory;
+import io.student.rangiffler.config.BrowserOptions;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.ui.page.LoginPage;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("ui")
-@UsePlaywright(PlaywrightOptionsFactory.class)
+@UsePlaywright(BrowserOptions.class)
 public final class ProfileTest {
   @Test
   @DisplayName("Сохранение профиля и чтение данных после перезагрузки")

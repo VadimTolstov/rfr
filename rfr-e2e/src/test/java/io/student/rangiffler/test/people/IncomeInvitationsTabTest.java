@@ -2,7 +2,7 @@ package io.student.rangiffler.test.people;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.junit.UsePlaywright;
-import io.student.rangiffler.config.PlaywrightOptionsFactory;
+import io.student.rangiffler.config.BrowserOptions;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.ui.page.LoginPage;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("ui")
-@UsePlaywright(PlaywrightOptionsFactory.class)
+@UsePlaywright(BrowserOptions.class)
 public final class IncomeInvitationsTabTest {
   @Test
   @DisplayName("Во вкладке входящих заявок показана только ожидающая заявка с кнопками принятия и отклонения")

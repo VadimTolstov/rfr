@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.junit.UsePlaywright;
-import io.student.rangiffler.config.PlaywrightOptionsFactory;
+import io.student.rangiffler.config.BrowserOptions;
 import io.student.rangiffler.data.TearDown;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.db.ApiProfile;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("ui")
-@UsePlaywright(PlaywrightOptionsFactory.class)
+@UsePlaywright(BrowserOptions.class)
 public class RegistrationTest {
   @Test
   @DisplayName("Регистрация пользователя и успешная авторизация")
