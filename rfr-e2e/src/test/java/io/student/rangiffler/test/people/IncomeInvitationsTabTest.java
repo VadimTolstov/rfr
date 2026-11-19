@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 public final class IncomeInvitationsTabTest {
   @Test
   @DisplayName("Во вкладке входящих заявок показана только ожидающая заявка с кнопками принятия и отклонения")
-  void shouldShowOnlyIncomeInvitationWithActions(@User(incomeInvitations = 1) TestUser user, Page page) {
+  void shouldShowOnlyIncomeInvitationWithActions(
+      @User(friends = 1, incomeInvitations = 1, outcomeInvitations = 1) TestUser user, Page page
+  ) {
     new LoginPage(page)
         .open()
         .clickLogin()

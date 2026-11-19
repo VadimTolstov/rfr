@@ -9,17 +9,19 @@ import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.annotation.StaticUser;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
+import io.student.rangiffler.jupiter.extension.UsersQueueExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.TestReporter;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 import org.junit.platform.testkit.engine.EngineTestKit;
 
-/** Exercises queued static user leases through the Jupiter engine. */
 public final class UsersQueueExtensionTest {
   @Test
   @DisplayName("Возвращает пользователей в пул после четырёх последовательных тестов")
@@ -39,6 +41,12 @@ public final class UsersQueueExtensionTest {
     assertEquals(0, recovered.testEvents().failed().count());
   }
 
+  @Test
+  @DisplayName("Выполняет тест без параметра с аннотацией StaticUser")
+  void shouldRunTestWithoutStaticUserAnnotation() {
+    assertEquals(1, execute(MissingStaticUserAnnotationTarget.class).testEvents().succeeded().count());
+  }
+
   private EngineExecutionResults execute(Class<?> target) {
     return EngineTestKit.engine("junit-jupiter")
         .selectors(selectClass(target))
@@ -47,7 +55,6 @@ public final class UsersQueueExtensionTest {
         .execute();
   }
 
-  /** Runs four sequential leases against a three-user pool. */
   @ProbeTarget
   @TestMethodOrder(OrderAnnotation.class)
   @Execution(ExecutionMode.SAME_THREAD)
@@ -83,6 +90,15 @@ public final class UsersQueueExtensionTest {
     @Test
     void failsAfterLeasingUser(@StaticUser TestUser user) {
       fail("Intentional failure after static user lease " + user.username());
+    }
+  }
+
+  @ProbeTarget
+  @ExtendWith(UsersQueueExtension.class)
+  static class MissingStaticUserAnnotationTarget {
+    @Test
+    void runsWithoutStaticUser(TestReporter reporter) {
+      reporter.publishEntry("user-lease", "not-required");
     }
   }
 }

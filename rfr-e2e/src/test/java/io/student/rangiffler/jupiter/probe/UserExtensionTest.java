@@ -125,13 +125,9 @@ public final class UserExtensionTest {
   }
 
   @Test
-  @DisplayName("Сообщает об отсутствии аннотации User в тестовом методе")
-  void shouldFailWhenUserAnnotationIsMissing(TestReporter reporter) {
-    EngineExecutionResults results = execute(MissingUserAnnotationTarget.class);
-    Throwable failure = failure(results);
-    assertTrue(hasCause(failure, ParameterResolutionException.class));
-    assertTrue(failure.getMessage().contains("User annotation was not found"));
-    reporter.publishEntry("missing-user-annotation", "failed-fast");
+  @DisplayName("Выполняет тест без параметра с аннотацией User")
+  void shouldRunTestWithoutUserAnnotation() {
+    assertEquals(1, execute(MissingUserAnnotationTarget.class).testEvents().succeeded().count());
   }
 
   private EngineExecutionResults execute(Class<?> target) {
@@ -271,8 +267,8 @@ public final class UserExtensionTest {
   @ExtendWith(UserExtension.class)
   static class MissingUserAnnotationTarget {
     @Test
-    void requiresUserAnnotation(TestReporter reporter) {
-      fail("Test without User annotation should not execute");
+    void runsWithoutUser(TestReporter reporter) {
+      reporter.publishEntry("user-fixture", "not-required");
     }
   }
 }

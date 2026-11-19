@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 public final class FriendsTabTest {
   @Test
   @DisplayName("Во вкладке друзей показана только существующая дружба с кнопкой удаления")
-  void shouldShowOnlyFriendWithRemoveAction(@User(friends = 1) TestUser user, Page page) {
+  void shouldShowOnlyFriendWithRemoveAction(
+      @User(friends = 1, incomeInvitations = 1, outcomeInvitations = 1) TestUser user, Page page
+  ) {
     new LoginPage(page)
         .open()
         .clickLogin()

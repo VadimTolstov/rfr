@@ -21,11 +21,9 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
                 .orElseThrow(() -> new ParameterResolutionException("Test method was not found for " + context.getDisplayName()));
         Parameter[] parameters = method.getParameters();
         ExtensionContext.Store store = context.getStore(NAMESPACE);
-        boolean found = false;
         for (int index = 0; index < parameters.length; index++) {
             Parameter parameter = parameters[index];
             if (parameter.isAnnotationPresent(User.class)) {
-                found = true;
                 String key = storeKey(context, index);
                 if (store.get(key) != null) {
                     continue;
@@ -35,9 +33,6 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
                 store.put(key, fixture);
                 fixture.create();
             }
-        }
-        if (!found) {
-            throw new ParameterResolutionException("User annotation was not found for test " + context.getDisplayName());
         }
     }
 

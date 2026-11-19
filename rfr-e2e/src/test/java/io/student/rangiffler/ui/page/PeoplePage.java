@@ -62,7 +62,7 @@ public final class PeoplePage {
 
   @Step("Проверить друга: {username}")
   public PeoplePage checkThatFriendIsDisplayed(String username) {
-    checkThatUserIsDisplayed(username);
+    checkThatOnlyUserIsDisplayed(username);
     PlaywrightAssertions.assertThat(acceptButtons).hasCount(0);
     PlaywrightAssertions.assertThat(declineButtons).hasCount(0);
     PlaywrightAssertions.assertThat(cancelButtons).hasCount(0);
@@ -90,7 +90,7 @@ public final class PeoplePage {
 
   @Step("Проверить входящую заявку от пользователя: {username}")
   public PeoplePage checkThatIncomeInvitationIsDisplayed(String username) {
-    checkThatUserIsDisplayed(username);
+    checkThatOnlyUserIsDisplayed(username);
     PlaywrightAssertions.assertThat(acceptButtons).hasCount(1);
     PlaywrightAssertions.assertThat(declineButtons).hasCount(1);
     PlaywrightAssertions.assertThat(removeButtons).hasCount(0);
@@ -114,7 +114,7 @@ public final class PeoplePage {
 
   @Step("Проверить исходящую заявку пользователю: {username}")
   public PeoplePage checkThatOutcomeInvitationIsDisplayed(String username) {
-    checkThatUserIsDisplayed(username);
+    checkThatOnlyUserIsDisplayed(username);
     PlaywrightAssertions.assertThat(waitingLabels).hasCount(1);
     PlaywrightAssertions.assertThat(cancelButtons).hasCount(1);
     PlaywrightAssertions.assertThat(removeButtons).hasCount(0);
@@ -164,10 +164,12 @@ public final class PeoplePage {
     return response.url().contains("/graphql") && body != null && body.contains(operation);
   }
 
-  private PeoplePage checkThatUserIsDisplayed(String username) {
-    Locator userRow = table.getByRole(AriaRole.ROW).filter(new Locator.FilterOptions().setHasText(username));
-    PlaywrightAssertions.assertThat(userRow).hasCount(1);
-    return this;
+  private void checkThatOnlyUserIsDisplayed(String username) {
+    Locator rows = table.getByRole(AriaRole.ROW).filter(new Locator.FilterOptions()
+        .setHas(page.getByRole(AriaRole.CELL)));
+    PlaywrightAssertions.assertThat(rows).hasCount(1);
+    PlaywrightAssertions.assertThat(rows.getByRole(AriaRole.CELL,
+        new Locator.GetByRoleOptions().setName(username).setExact(true))).isVisible();
   }
 
   private PeoplePage checkThatEmptyState() {
