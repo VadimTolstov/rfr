@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-/** Resolves static user parameters through JVM-wide queue leases. */
 public final class UsersQueueExtension implements BeforeEachCallback, ParameterResolver {
   private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UsersQueueExtension.class);
 
@@ -21,10 +20,8 @@ public final class UsersQueueExtension implements BeforeEachCallback, ParameterR
         .orElseThrow(() -> new ParameterResolutionException("Test method was not found for " + context.getDisplayName()));
     Parameter[] parameters = method.getParameters();
     ExtensionContext.Store store = context.getStore(NAMESPACE);
-    boolean found = false;
     for (int index = 0; index < parameters.length; index++) {
       if (parameters[index].isAnnotationPresent(StaticUser.class)) {
-        found = true;
         String key = storeKey(context, index);
         if (store.get(key) != null) {
           continue;
@@ -33,9 +30,6 @@ public final class UsersQueueExtension implements BeforeEachCallback, ParameterR
         store.put(key, fixture);
         fixture.create();
       }
-    }
-    if (!found) {
-      throw new ParameterResolutionException("StaticUser annotation was not found for test " + context.getDisplayName());
     }
   }
 

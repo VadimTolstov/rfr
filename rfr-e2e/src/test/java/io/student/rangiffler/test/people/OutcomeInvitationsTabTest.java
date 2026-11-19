@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 public final class OutcomeInvitationsTabTest {
   @Test
   @DisplayName("Во вкладке исходящих заявок показана только ожидающая заявка с кнопкой отмены")
-  void shouldShowOnlyOutcomeInvitationWithCancelAction(@User(outcomeInvitations = 1) TestUser user, Page page) {
+  void shouldShowOnlyOutcomeInvitationWithCancelAction(
+      @User(friends = 1, incomeInvitations = 1, outcomeInvitations = 1) TestUser user, Page page
+  ) {
     new LoginPage(page)
         .open()
         .clickLogin()
