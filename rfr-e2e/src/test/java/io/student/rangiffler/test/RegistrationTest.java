@@ -11,8 +11,10 @@ import io.student.rangiffler.data.db.ApiProfile;
 import io.student.rangiffler.data.db.AuthAccount;
 import io.student.rangiffler.ui.page.LoginPage;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("ui")
 @UsePlaywright(PlaywrightOptionsFactory.class)
 public class RegistrationTest {
   @Test

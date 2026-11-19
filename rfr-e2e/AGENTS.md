@@ -7,8 +7,21 @@
 ```bash
 ./gradlew :rfr-e2e:test
 ./gradlew :rfr-e2e:test --tests '<Тест>'
+./gradlew e2e
 ./gradlew :rfr-e2e:installPlaywright
 ```
+
+`:rfr-e2e:test` исключает тесты с тегом `ui`, если запуск не ограничен фильтром `--tests`. `e2e` ждёт доступности сервисов, проверяет миграции и запускает только тесты с тегом `ui`; ожидание не поднимает сервисы.
+
+`StandReadinessExtension` ждёт MySQL, auth, API и фронтенд до `rfr.standTimeout` (по умолчанию 180 секунд), если включён `rfr.standCheck`. В одном service-файле расширения зарегистрированы в порядке `AllureEnvironmentExtension` → `StandReadinessExtension` → `StandSchemaExtension`: окружение регистрирует завершение до возможной ошибки подготовки, а ожидание предшествует сверке миграций. `e2e` не зависит от Bash-задачи `waitForStand`; она сохранена для ручного запуска скрипта.
+
+| Свойство | Назначение | По умолчанию в `test` и прямом JUnit-запуске из IDE | В `e2e` |
+|---|---|---|---|
+| `rfr.standCheck` | Ожидание готовности сервисов | `false` | `true` |
+| `rfr.migrationCheck` | Сверка миграций | `false` | `true` |
+| `rfr.environmentDb` | Чтение версий схем для Allure | `false` | `true` |
+
+Для ожидания при UI-запуске из IDE задай `-Drfr.standCheck=true`. Для сверки миграций добавь `-Drfr.migrationCheck=true` и корректные пути миграций, для чтения версий в отчёт — `-Drfr.environmentDb=true`. Значения по умолчанию действуют, если свойства и соответствующие переменные окружения не переопределены. При выключенном `environmentDb` Allure сохраняет файл со всеми ключами и версиями `unavailable`, не открывая соединений к MySQL. Проверки пользовательских данных имеют собственные зависимости от БД; флаги управляют только глобальными расширениями.
 
 ## Правила тестов
 - На классах тестов используй `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright предоставляет `Page` как параметр теста.

@@ -8,6 +8,7 @@ version = '1.0.0'
 def allureJavaVersion = '3.0.0'
 def allureReportVersion = '3.17.0'
 def aspectJVersion = '1.9.25.1'
+def flywayVersion = rootProject.project(':rfr-api').flywayVersion
 def junitVersion = '6.1.3'
 def playwrightVersion = '1.63.0'
 
@@ -22,18 +23,23 @@ dependencies {
     agent "org.aspectj:aspectjweaver:$aspectJVersion"
 
     testImplementation platform("org.junit:junit-bom:$junitVersion")
-    testImplementation "org.junit.platform:junit-platform-testkit"
     testImplementation platform("io.qameta.allure:allure-bom:$allureJavaVersion")
+    testImplementation platform("org.springframework.boot:spring-boot-dependencies:4.1.1")
 
     testImplementation "io.qameta.allure:allure-jupiter"
     testImplementation "io.qameta.allure:allure-playwright"
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
-    testImplementation "org.springframework:spring-jdbc:7.0.9"
-    testImplementation "com.mysql:mysql-connector-j:8.0.33"
-    testImplementation "org.springframework.security:spring-security-crypto:7.1.1"
+
+    testImplementation "org.springframework:spring-jdbc"
+    testImplementation "org.springframework.security:spring-security-crypto"
+    testImplementation "org.flywaydb:flyway-core:$flywayVersion"
+    testRuntimeOnly "org.flywaydb:flyway-mysql:$flywayVersion"
+    testImplementation "com.zaxxer:HikariCP"
+    testRuntimeOnly "com.mysql:mysql-connector-j"
 
     testImplementation "org.junit.jupiter:junit-jupiter"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.junit.platform:junit-platform-testkit"
     testRuntimeOnly "org.aspectj:aspectjrt:$aspectJVersion"
 }
 
@@ -45,10 +51,63 @@ allure {
     }
 }
 
-test {
-    useJUnitPlatform()
+def rfrSystemProperties = System.getProperties().findAll { key, value -> key.toString().startsWith('rfr.') }
+def commit = providers.exec {
+    workingDir rootProject.projectDir
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+}.standardOutput.asText.map { it.trim() }
+
+tasks.withType(Test).configureEach {
+    systemProperties rfrSystemProperties
+    if (!rfrSystemProperties.containsKey('rfr.commit')) {
+        systemProperty 'rfr.commit', commit.get()
+    }
+    if (!rfrSystemProperties.containsKey('rfr.authMigrations') && !System.getenv('RFR_AUTH_MIGRATIONS')?.trim()) {
+        systemProperty 'rfr.authMigrations', rootProject.file('rfr-auth/src/main/resources/db/migration/rangiffler-auth').absolutePath
+    }
+    if (!rfrSystemProperties.containsKey('rfr.apiMigrations') && !System.getenv('RFR_API_MIGRATIONS')?.trim()) {
+        systemProperty 'rfr.apiMigrations', rootProject.file('rfr-api/src/main/resources/db/migration/rangiffler-api').absolutePath
+    }
     jvmArgumentProviders.add({ ["-javaagent:${configurations.agent.singleFile}"] } as CommandLineArgumentProvider)
     outputs.upToDateWhen { false }
+}
+
+test {
+    useJUnitPlatform()
+    doFirst {
+        if (filter.commandLineIncludePatterns.empty) {
+            options { excludeTags 'ui' }
+        }
+    }
+}
+
+tasks.register('waitForStand', Exec) {
+    group = 'verification'
+    description = 'Waits until MySQL, rfr-auth, rfr-api and the frontend respond'
+    workingDir = rootProject.projectDir
+    def bashExecutable = System.getenv('RFR_BASH') ?: System.getProperty('rfr.bash')
+    if (!bashExecutable && System.getProperty('os.name').toLowerCase().contains('windows')) {
+        def programFiles = System.getenv('ProgramFiles') ?: 'C:\\Program Files'
+        def localAppData = System.getenv('LOCALAPPDATA') ?: ''
+        bashExecutable = [
+            new File(programFiles, 'Git/bin/bash.exe'),
+            new File(localAppData, 'Programs/Git/bin/bash.exe')
+        ].find { it.isFile() }?.absolutePath
+    }
+    commandLine bashExecutable ?: 'bash', 'scripts/wait-for-stand.sh'
+}
+
+tasks.register('e2e', Test) {
+    group = 'verification'
+    description = 'Runs UI tests against a running stand'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    systemProperty 'rfr.migrationCheck', 'true'
+    systemProperty 'rfr.standCheck', 'true'
+    systemProperty 'rfr.environmentDb', 'true'
+    useJUnitPlatform {
+        includeTags 'ui'
+    }
 }
 
 tasks.register('installPlaywright', JavaExec) {

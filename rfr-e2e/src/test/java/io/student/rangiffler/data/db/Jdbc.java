@@ -14,12 +14,12 @@ public final class Jdbc {
   }
 
   public static JdbcClient getJdbcClient(Databases db) {
-    return JdbcClient.create(db.getDataSource());
+    return JdbcClient.create(db.dataSource());
   }
 
   public static void inTransaction(Databases db, Consumer<JdbcClient> action) {
     JdbcClient jdbcClient = getJdbcClient(db);
-    TransactionTemplate transactionTemplate = new TransactionTemplate(db.getTransactionManager());
+    TransactionTemplate transactionTemplate = new TransactionTemplate(db.transactionManager());
     transactionTemplate.execute(status -> {
       action.accept(jdbcClient);
       return null;
