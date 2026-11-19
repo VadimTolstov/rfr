@@ -14,12 +14,14 @@ public final class MainPage {
   private final Page page;
   private final Locator travelsMap;
   private final Locator profileLink;
+  private final Locator peopleLink;
 
   public MainPage(Page page) {
     this.page = page;
     travelsMap = page.getByRole(AriaRole.HEADING, new GetByRoleOptions().setName("Travels map"));
     profileLink = page.getByRole(AriaRole.BANNER)
         .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Profile").setExact(true));
+    peopleLink = page.getByRole(AriaRole.LINK, new GetByRoleOptions().setName("People").setExact(true));
   }
 
   @Step("Проверить, что карта путешествий отображается")
@@ -32,5 +34,11 @@ public final class MainPage {
   public ProfilePage clickProfile() {
     profileLink.click();
     return new ProfilePage(page);
+  }
+
+  @Step("Открыть список пользователей")
+  public PeoplePage clickPeople() {
+    peopleLink.click();
+    return new PeoplePage(page);
   }
 }

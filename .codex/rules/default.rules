@@ -7,6 +7,10 @@ prefix_rule(pattern = ["rmdir"], decision = "forbidden", justification = "Use .b
 
 # Запреты на публикацию
 prefix_rule(pattern = ["git", "push"], decision = "forbidden", justification = "Push only by user manually")
+prefix_rule(pattern = ["rtk", "git", "push"], decision = "forbidden", justification = "Push only by user manually")
+prefix_rule(pattern = ["rtk", "proxy", "git", "push"], decision = "forbidden", justification = "Push only by user manually")
+prefix_rule(pattern = ["rtk.exe", "git", "push"], decision = "forbidden", justification = "Push only by user manually")
+prefix_rule(pattern = ["rtk.exe", "proxy", "git", "push"], decision = "forbidden", justification = "Push only by user manually")
 prefix_rule(pattern = ["git", "rm"], decision = "forbidden", justification = "Use .bak rename instead of deletion")
 prefix_rule(pattern = ["git", "send-email"], decision = "forbidden", justification = "No email publication")
 prefix_rule(pattern = ["gh", "pr", "create"], decision = "forbidden", justification = "PR only by user manually")

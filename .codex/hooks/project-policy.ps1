@@ -3,7 +3,7 @@ $event = [Console]::In.ReadToEnd() | ConvertFrom-Json
 $command = [string]$event.tool_input.command
 
 if ($event.hook_event_name -eq 'PreToolUse' -and $event.tool_name -eq 'Bash') {
-  $pattern = '(?im)(?:^|[;&|]\s*|\r?\n\s*)(?:rtk\s+(?:proxy\s+)?)?(?:git|git\.exe)\s+(?:(?:-C(?:\s+(?:"[^"]+"|''[^'']+''|\S+)|\S+))\s+)*push(?:\s|$)'
+  $pattern = '(?im)(?:^|[;&|]\s*|\r?\n\s*)(?:(?:rtk(?:\.exe)?|(?:"[^"]*rtk\.exe"|''[^'']*rtk\.exe''|[^\s;&|]*rtk\.exe))\s+(?:proxy\s+)?)?(?:git|git\.exe)\s+(?:(?:-C(?:\s+(?:"[^"]+"|''[^'']+''|\S+)|\S+))\s+)*push(?:\s|$)'
   if ($command -match $pattern) {
     [ordered]@{
       hookSpecificOutput = [ordered]@{
