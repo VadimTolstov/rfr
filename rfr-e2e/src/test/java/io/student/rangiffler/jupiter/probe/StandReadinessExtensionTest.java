@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
-/** Exercises stand readiness without depending on the running application. */
 final class StandReadinessExtensionTest {
     @Test
     @DisplayName("Обычный класс выполняется без запросов при включённом ожидании")
@@ -119,13 +118,12 @@ final class StandReadinessExtensionTest {
     }
 
     @Test
-    @DisplayName("ServiceLoader регистрирует ожидание до сверки миграций")
-    void readinessPrecedesSchema() {
-        List<String> extensions = ServiceLoader.load(Extension.class).stream()
-                .map(provider -> provider.type().getName()).toList();
-        assertTrue(extensions.contains(StandReadinessExtension.class.getName()));
-        assertTrue(extensions.indexOf(StandSchemaExtension.class.getName())
-                > extensions.indexOf(StandReadinessExtension.class.getName()));
+    @DisplayName("ServiceLoader регистрирует окружение, ожидание и сверку миграций в этом порядке")
+    void registersSuiteExtensionsInOrder() {
+        List<String> expected = List.of(AllureEnvironmentExtension.class.getName(),
+                StandReadinessExtension.class.getName(), StandSchemaExtension.class.getName());
+        assertEquals(expected, ServiceLoader.load(Extension.class).stream()
+                .map(provider -> provider.type().getName()).filter(expected::contains).toList());
     }
 
     private EngineExecutionResults run(Map<String, String> parameters) {
@@ -140,8 +138,8 @@ final class StandReadinessExtensionTest {
                 .configurationParameter("junit.jupiter.execution.parallel.enabled", "false")
                 .configurationParameter(ProbeTargetCondition.PARAMETER, "true")
                 .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-                .configurationParameter("junit.jupiter.extensions.autodetection.exclude",
-                        AllureEnvironmentExtension.class.getName())
+                .configurationParameter("junit.jupiter.extensions.autodetection.include",
+                        StandReadinessExtension.class.getName())
                 .configurationParameters(parameters)
                 .execute();
     }

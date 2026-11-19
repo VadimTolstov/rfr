@@ -3,7 +3,10 @@ package io.student.rangiffler.jupiter.probe;
 import io.student.rangiffler.jupiter.annotation.ProbeTarget;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.AllureEnvironmentExtension;
+import io.student.rangiffler.jupiter.extension.StandReadinessExtension;
+import io.student.rangiffler.jupiter.extension.StandSchemaExtension;
 import io.student.rangiffler.jupiter.extension.SuiteExtension;
+import io.student.rangiffler.jupiter.probe.StandReadinessExtensionTest.StandFixture;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
@@ -11,6 +14,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -19,12 +24,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 import org.junit.platform.testkit.engine.EngineTestKit;
 import org.jspecify.annotations.NullMarked;
@@ -33,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
-/** Verifies environment publication and callback ordering through the Jupiter engine. */
 @NullMarked
 final class AllureEnvironmentExtensionTest {
     @Test
@@ -104,12 +110,38 @@ final class AllureEnvironmentExtensionTest {
                             "api", environment.getProperty("migration.rangiffler-api", "missing")));
         }
     }
+    @Test
+    @DisplayName("Allure записывает окружение, когда ожидание стенда блокирует UI-класс")
+    void writesEnvironmentAfterReadinessTimeout(@TempDir Path directory) throws IOException {
+        try (StandFixture stand = new StandFixture()) {
+            stand.start(Duration.ofDays(1), false);
+            Map<String, String> parameters = new HashMap<>(stand.parameters(true, 2));
+            parameters.put("rfr.environmentDb", "false");
+            parameters.put("rfr.migrationCheck", "true");
+            parameters.put("rfr.authMigrations", directory.resolve("missing").toString());
+            parameters.put("rfr.apiMigrations", directory.resolve("missing").toString());
+            EngineExecutionResults results = run(ReadinessTimeoutTargetTest.class, directory, parameters,
+                    String.join(",", AllureEnvironmentExtension.class.getName(), StandReadinessExtension.class.getName(),
+                            StandSchemaExtension.class.getName()));
+            assertEquals(0, results.testEvents().started().count());
+            assertTrue(results.containerEvents().failed().stream()
+                    .flatMap(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().stream())
+                    .anyMatch(error -> error.getMessage().contains("Stand did not become ready")
+                            && error.getMessage().contains("rfr-gql-client")));
+            assertEquals(parameters.get("rfr.frontUrl"), environment(directory).getProperty("frontUrl"));
+        }
+    }
+
     private EngineExecutionResults run(Class<?> target, Path directory, Map<String, String> parameters) {
+        return run(target, directory, parameters, AllureEnvironmentExtension.class.getName());
+    }
+
+    private EngineExecutionResults run(Class<?> target, Path directory, Map<String, String> parameters,
+            String extensions) {
         return EngineTestKit.engine("junit-jupiter").selectors(selectClass(target))
                 .configurationParameter(ProbeTargetCondition.PARAMETER, "true")
                 .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-                .configurationParameter("junit.jupiter.extensions.autodetection.include",
-                        AllureEnvironmentExtension.class.getName())
+                .configurationParameter("junit.jupiter.extensions.autodetection.include", extensions)
                 .configurationParameter("allure.results.directory", directory.toString())
                 .configurationParameter("rfr.commit", "abc1234")
                 .configurationParameter("rfr.browser", "chromium")
@@ -178,6 +210,15 @@ final class AllureEnvironmentExtensionTest {
     /** Allows a successful engine run without UI or database fixtures. */
     @ProbeTarget
     static final class SuccessTargetTest {
+        @Test
+        void executes() {
+        }
+    }
+
+    /** Exercises the global callbacks when the frontend never gets ready. */
+    @ProbeTarget
+    @Tag("ui")
+    static final class ReadinessTimeoutTargetTest {
         @Test
         void executes() {
         }
