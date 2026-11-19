@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** Bounds the whole wait, including DNS and response bodies, by a monotonic deadline. */
 final class StandReadiness {
     private final List<StandEndpoint> endpoints;
     private final Duration timeout;
