@@ -58,7 +58,7 @@
 
 ## Правила тестов
 
-- Для UI-классов используй `@UsePlaywright(PlaywrightOptionsFactory.class)`; `Page` передаётся как параметр теста.
+- Для UI-классов используй `@UsePlaywright(BrowserOptions.class)`; `Page` передаётся как параметр теста.
 - `@User TestUser user` использует `UserRequest`, композицию `UserFixture` и очистку через JUnit Store; не создавай те же записи вручную.
 - `UserFixture` реализует `AutoCloseable`; JUnit закрывает ресурсы Store благодаря `junit.jupiter.extensions.store.close.autocloseable.enabled=true`.
 - Пользователей и связи создавай через фикстуры, не хардкодь логины, пароли, URL и тестовые данные.

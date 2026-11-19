@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.junit.UsePlaywright;
-import io.student.rangiffler.config.BrowserOptions;
+import io.student.rangiffler.jupiter.extension.BrowserOptions;
 import io.student.rangiffler.data.TearDown;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.data.db.ApiProfile;

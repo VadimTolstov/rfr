@@ -65,6 +65,22 @@ public final class TestConfig {
     return Boolean.parseBoolean(value("headless", "true"));
   }
 
+  public static String testIdAttribute() {
+    return value("testIdAttribute", "data-test-id");
+  }
+
+  public static String browserLocale() {
+    return value("browserLocale", "en-US");
+  }
+
+  public static int screenWidth() {
+    return Integer.parseInt(value("screenWidth", "1920"));
+  }
+
+  public static int screenHeight() {
+    return Integer.parseInt(value("screenHeight", "1080"));
+  }
+
   public static String commit() {
     return value("commit", "unavailable");
   }

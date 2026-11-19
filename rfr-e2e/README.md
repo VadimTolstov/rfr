@@ -1,6 +1,6 @@
 # rfr-e2e
 
-E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 и Spring `JdbcClient`. Тестовые классы используют `@UsePlaywright(PlaywrightOptionsFactory.class)`; Playwright передаёт `Page` в параметры тестов.
+E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 и Spring `JdbcClient`. Тестовые классы используют `@UsePlaywright(BrowserOptions.class)`; Playwright передаёт `Page` в параметры тестов. По умолчанию размер экрана и области просмотра составляет 1920 × 1080, `getByTestId()` использует `data-test-id`, а браузер запускается в режиме headless.
 
 ## Запуск
 
@@ -42,6 +42,10 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `rfr.apiMigrations` | `RFR_API_MIGRATIONS` | `../rfr-api/src/main/resources/db/migration/rangiffler-api` |
 | `rfr.browser` | `RFR_BROWSER` | `chromium` |
 | `rfr.headless` | `RFR_HEADLESS` | `true` |
+| `rfr.testIdAttribute` | `RFR_TEST_ID_ATTRIBUTE` | `data-test-id` |
+| `rfr.browserLocale` | `RFR_BROWSER_LOCALE` | `en-US` |
+| `rfr.screenWidth` | `RFR_SCREEN_WIDTH` | `1920` |
+| `rfr.screenHeight` | `RFR_SCREEN_HEIGHT` | `1080` |
 | `rfr.commit` | `RFR_COMMIT` | `unavailable` при запуске вне Gradle |
 
 `dbUrl` задаёт базовый JDBC URL; конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `BrowserOptions` применяет настройки `browser` и `headless`; локаль контекста — `en-US`.
