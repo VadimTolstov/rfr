@@ -81,6 +81,14 @@ public final class TestConfig {
     return Integer.parseInt(value("screenHeight", "1080"));
   }
 
+  public static int actionTimeoutMs() {
+    return Integer.parseInt(value("actionTimeoutMs", "5000"));
+  }
+
+  public static int navigationTimeoutMs() {
+    return Integer.parseInt(value("navigationTimeoutMs", "30000"));
+  }
+
   public static String commit() {
     return value("commit", "unavailable");
   }

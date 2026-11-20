@@ -1,17 +1,14 @@
 package io.student.rangiffler.test.people;
 
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.junit.UsePlaywright;
-import io.student.rangiffler.jupiter.extension.BrowserOptions;
+import io.student.rangiffler.jupiter.annotation.UiTest;
 import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.ui.page.LoginPage;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-@Tag("ui")
-@UsePlaywright(BrowserOptions.class)
+@UiTest
 public final class OutcomeInvitationsTabTest {
   @Test
   @DisplayName("Во вкладке исходящих заявок показана только ожидающая заявка с кнопкой отмены")

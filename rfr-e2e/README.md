@@ -1,6 +1,8 @@
 # rfr-e2e
 
-E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 и Spring `JdbcClient`. Тестовые классы используют `@UsePlaywright(BrowserOptions.class)`; Playwright передаёт `Page` в параметры тестов. По умолчанию размер экрана и области просмотра составляет 1920 × 1080, `getByTestId()` использует `data-test-id`, а браузер запускается в режиме headless.
+E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 и Spring `JdbcClient`. Аннотация `@UiTest` задаёт тег `ui` и подключает Playwright с `BrowserOptions`. Playwright передаёт `Page` в параметры тестов. По умолчанию размер экрана и области просмотра составляет 1920 × 1080, `getByTestId()` использует `data-test-id`, а браузер запускается в режиме headless.
+
+`@UiTest` задаёт по умолчанию 5 секунд для действий Playwright (например, `click()` и `fill()`) и 30 секунд для навигации. Оба значения настраиваются в миллисекундах. JUnit отдельно ограничивает тестовый метод 30 секундами.
 
 ## Запуск
 
@@ -46,6 +48,8 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `rfr.browserLocale` | `RFR_BROWSER_LOCALE` | `en-US` |
 | `rfr.screenWidth` | `RFR_SCREEN_WIDTH` | `1920` |
 | `rfr.screenHeight` | `RFR_SCREEN_HEIGHT` | `1080` |
+| `rfr.actionTimeoutMs` | `RFR_ACTION_TIMEOUT_MS` | `5000` |
+| `rfr.navigationTimeoutMs` | `RFR_NAVIGATION_TIMEOUT_MS` | `30000` |
 | `rfr.commit` | `RFR_COMMIT` | `unavailable` при запуске вне Gradle |
 
 `dbUrl` задаёт базовый JDBC URL; конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `BrowserOptions` применяет настройки `browser` и `headless`; локаль контекста — `en-US`.
@@ -56,8 +60,8 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 
 | Пакет | Что лежит |
 |---|---|
-| `config` | `TestConfig` и `BrowserOptions` |
-| `jupiter` | интеграция с JUnit: `annotation` (`@User`, `@ProbeTarget`), `extension` (`UserExtension`), `condition` (`ProbeTargetCondition`), `probe` (`UserExtensionTest`) |
+| `config` | `TestConfig` |
+| `jupiter` | интеграция с JUnit: `annotation` (`@UiTest`, `@User`, `@ProbeTarget`), `extension` (`BrowserOptions`, `UserExtension`), `condition` (`ProbeTargetCondition`), `probe` (`UserExtensionTest`) |
 | `data` | `TestUser`, `UserRequest`, `UserFixture`, `TearDown`, `SingleUserFixture` и декораторы `UserWithFriendsFixture`, `UserWithIncomeInvitations`, `UserWithOutcomeInvitationsFixture` |
 | `data.db` | `Databases` с ленивыми Hikari-пулами (максимум четыре соединения на схему), `Jdbc`, модели и операции для профилей, учётных записей и связей |
 | `utils` | `RandomDataUtils` — генерация тестовых имён и паролей |
