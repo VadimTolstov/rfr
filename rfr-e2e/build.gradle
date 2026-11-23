@@ -31,6 +31,7 @@ dependencies {
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
 
     testImplementation "org.springframework:spring-jdbc"
+    testImplementation "org.apache.httpcomponents.client5:httpclient5"
     testImplementation "org.springframework.security:spring-security-crypto"
     testImplementation "org.flywaydb:flyway-core:$flywayVersion"
     testRuntimeOnly "org.flywaydb:flyway-mysql:$flywayVersion"

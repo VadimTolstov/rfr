@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.Extension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
@@ -32,6 +35,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 final class StandReadinessExtensionTest {
+    @ParameterizedTest
+    @MethodSource("localhost")
+    @DisplayName("Проверка localhost допускает UI-тест, когда HTTP-сервисы слушают только один из адресов")
+    void acceptsLocalhostBoundToOneAddress(InetAddress address) throws IOException {
+        try (StandFixture stand = new StandFixture(new InetSocketAddress(address, 0))) {
+            stand.start(Duration.ZERO, false);
+            EngineExecutionResults results = run(stand.parameters(true, 5, "localhost"));
+            assertEquals(1, results.testEvents().succeeded().count(), () -> failures(results).toString());
+        }
+    }
+
+    private static InetAddress[] localhost() throws UnknownHostException {
+        return InetAddress.getAllByName("localhost");
+    }
+
     @Test
     @DisplayName("Обычный класс выполняется без запросов при включённом ожидании")
     void enabledCheckDoesNotRequestServicesForNonUiClass() throws IOException {
@@ -189,8 +207,12 @@ final class StandReadinessExtensionTest {
         private final ExecutorService executor;
 
         StandFixture() throws IOException {
-            this(HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0),
-                    new ServerSocket(0, 50, InetAddress.getLoopbackAddress()),
+            this(new InetSocketAddress("127.0.0.1", 0));
+        }
+
+        StandFixture(InetSocketAddress address) throws IOException {
+            this(HttpServer.create(address, 0),
+                    new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1")),
                     new AtomicInteger(), Executors.newVirtualThreadPerTaskExecutor());
         }
 
@@ -228,7 +250,11 @@ final class StandReadinessExtensionTest {
         }
 
         Map<String, String> parameters(boolean enabled, int timeout) {
-            String address = "http://127.0.0.1:" + server.getAddress().getPort();
+            return parameters(enabled, timeout, "127.0.0.1");
+        }
+
+        Map<String, String> parameters(boolean enabled, int timeout, String host) {
+            String address = "http://" + host + ":" + server.getAddress().getPort();
             return Map.of("rfr.standCheck", Boolean.toString(enabled),
                     "rfr.standTimeout", Integer.toString(timeout),
                     "rfr.dbUrl", "jdbc:mysql://127.0.0.1:" + database.getLocalPort(),
