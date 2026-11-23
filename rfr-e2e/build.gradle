@@ -125,3 +125,11 @@ tasks.register('installPlaywrightWithDeps', JavaExec) {
     mainClass = 'com.microsoft.playwright.CLI'
     args = ['install', '--with-deps', 'chromium']
 }
+
+tasks.register('showTrace', JavaExec) {
+    description = 'Opens a Playwright trace in TraceViewer: -Ptrace=<path to trace.zip>'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    argumentProviders.add({ ['show-trace', gradle.startParameter.currentDir.toPath()
+            .resolve(providers.gradleProperty('trace').get()).toString()] } as CommandLineArgumentProvider)
+}
