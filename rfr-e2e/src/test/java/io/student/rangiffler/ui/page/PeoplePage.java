@@ -18,7 +18,7 @@ public final class PeoplePage {
   private final PeopleTable table;
 
   public PeoplePage(Page page) {
-    friendsTab = page.getByRole(AriaRole.TAB, new GetByRoleOptions().setName("Frie").setExact(true));
+    friendsTab = page.getByRole(AriaRole.TAB, new GetByRoleOptions().setName("Friends").setExact(true));
     allPeopleTab = page.getByRole(AriaRole.TAB, new GetByRoleOptions().setName("All People").setExact(true));
     incomeInvitationsTab = page.getByRole(AriaRole.TAB, new GetByRoleOptions().setName("Income invitations").setExact(true));
     outcomeInvitationsTab = page.getByRole(AriaRole.TAB, new GetByRoleOptions().setName("Outcome invitations").setExact(true));
