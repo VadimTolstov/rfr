@@ -10,7 +10,7 @@ import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 
 public final class PeoplePage {
-  public static final String URL = TestConfig.FRONTEND_URL + "/people";
+  public static final String URL = TestConfig.frontUrl() + "/people";
 
   private final Page page;
   private final Locator friendsTab;

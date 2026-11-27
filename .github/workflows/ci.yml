@@ -42,6 +42,7 @@ jobs:
               - 'rfr-auth/**'
             e2e:
               - 'rfr-e2e/**'
+              - 'scripts/wait-for-stand.sh'
             frontend:
               - 'rfr-gql-client/**'
 
@@ -123,14 +124,8 @@ jobs:
           sleep 2
       - name: Install frontend dependencies and start development server
         run: nohup bash -c 'cd rfr-gql-client && npm ci && npm run dev -- --host 0.0.0.0' > /tmp/rangiffler-frontend.log 2>&1 < /dev/null &
-      - name: Wait for services
-        run: |
-          echo "Waiting for services..."
-          for port in 8081 3001; do
-            echo "Waiting for port $port..."
-            timeout 120 bash -c "until curl -s -o /dev/null -w '%{http_code}' http://localhost:$port | grep -qE '200|302|401'; do sleep 2; done"
-            echo "Port $port is up"
-          done
+      - name: Wait for stand
+        run: ./gradlew :rfr-e2e:waitForStand
       - name: Run E2E tests
         run: ./gradlew e2e
       - name: Show logs on failure

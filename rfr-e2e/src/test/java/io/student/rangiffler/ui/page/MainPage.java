@@ -9,7 +9,7 @@ import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
 
 public final class MainPage {
-  public static final String URL = TestConfig.FRONTEND_URL + "/";
+  public static final String URL = TestConfig.frontUrl() + "/";
 
   private final Page page;
   private final Locator travelsMap;

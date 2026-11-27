@@ -10,7 +10,7 @@ import io.student.rangiffler.config.TestConfig;
 import io.student.rangiffler.ui.component.CredentialsForm;
 
 public final class RegistrationPage {
-  public static final String URL = TestConfig.AUTH_URL + "/register";
+  public static final String URL = TestConfig.authUrl() + "/register";
 
   private final Page page;
   private final CredentialsForm credentialsForm;
