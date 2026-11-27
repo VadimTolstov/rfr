@@ -74,11 +74,11 @@ public final class TestConfig {
   }
 
   public static int screenWidth() {
-    return Integer.parseInt(value("screenWidth", "1920"));
+    return Integer.parseInt(value("viewportWidth", value("screenWidth", "1920")));
   }
 
   public static int screenHeight() {
-    return Integer.parseInt(value("screenHeight", "1080"));
+    return Integer.parseInt(value("viewportHeight", value("screenHeight", "1080")));
   }
 
   public static int actionTimeoutMs() {

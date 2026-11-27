@@ -61,7 +61,7 @@ public final class UsersQueueExtensionTest {
   static class FourUsersTarget {
     @Test
     @Order(1)
-    void first(@StaticUser TestUser user) {
+    void receivesFirstUser(@StaticUser TestUser user) {
       assertFalse(user.username().isBlank());
     }
 

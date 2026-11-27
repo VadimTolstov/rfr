@@ -128,14 +128,14 @@ final class DatabasePoolsExtensionTest {
                 var second = executor.submit(() -> run(SecondConcurrentTargetTest.class));
                 assertTrue(pair.entered().await(10, TimeUnit.SECONDS));
                 Pools pools = OBSERVED.get();
-                pair.first().countDown();
+                pair.releaseFirst().countDown();
                 assertEquals(1, first.get(10, TimeUnit.SECONDS).testEvents().succeeded().count());
                 pools.checkOpen();
                 pair.second().countDown();
                 assertEquals(1, second.get(10, TimeUnit.SECONDS).testEvents().succeeded().count());
                 pools.checkClosed();
             } finally {
-                pair.first().countDown();
+                pair.releaseFirst().countDown();
                 pair.second().countDown();
                 executor.shutdownNow();
             }
@@ -194,7 +194,7 @@ final class DatabasePoolsExtensionTest {
     }
 
     /** Makes two root contexts overlap until the observing test releases them in order. */
-    private record Pair(CountDownLatch entered, CountDownLatch first, CountDownLatch second) {
+    private record Pair(CountDownLatch entered, CountDownLatch releaseFirst, CountDownLatch second) {
         void hold(CountDownLatch release) throws InterruptedException {
             OBSERVED.set(pools());
             entered.countDown();
@@ -268,7 +268,7 @@ final class DatabasePoolsExtensionTest {
         @Test
         void holdsPools() throws InterruptedException {
             Pair pair = ACTIVE.get();
-            pair.hold(pair.first());
+            pair.hold(pair.releaseFirst());
         }
     }
 

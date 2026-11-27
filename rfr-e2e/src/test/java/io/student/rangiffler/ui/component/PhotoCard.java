@@ -5,8 +5,9 @@ import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
-import java.util.regex.Pattern;
-
+/**
+ * Encapsulates the controls and counters of a single travel photo.
+ */
 public final class PhotoCard {
     private final Locator card;
     private final String description;
@@ -16,23 +17,24 @@ public final class PhotoCard {
         this.description = description;
     }
 
-    @Step("Кнопка \"Photo actions\" видима")
+    @Step("Проверить наличие кнопки Photo actions у карточки «{this.description}»")
     public PhotoCard checkThatOwnerMenuVisible() {
         PlaywrightAssertions.assertThat(ownerMenu())
                 .isVisible();
         return this;
     }
 
-    @Step("Кнопка \"Photo actions\" отсутствует")
-    public PhotoCard  checkThatOwnerMenuAbsent() {
+    @Step("Проверить отсутствие кнопки Photo actions у карточки «{this.description}»")
+    public PhotoCard checkThatOwnerMenuAbsent() {
+        PlaywrightAssertions.assertThat(card).isVisible();
         PlaywrightAssertions.assertThat(ownerMenu())
                 .hasCount(0);
         return this;
     }
 
-    @Step("Проверить, что счётчик лайков показывает {likes}")
+    @Step("Проверить счётчик лайков у карточки «{this.description}»: {likes}")
     public PhotoCard checkThatLikes(String likes) {
-        PlaywrightAssertions.assertThat(card.locator("button[aria-label='like'] + *"))
+        PlaywrightAssertions.assertThat(card.getByTestId("photo-likes"))
                 .hasText(likes);
         return this;
     }

@@ -4,6 +4,24 @@
 
 ---
 
+## 0. Обязательное независимое ревью автотестов
+
+После создания или изменения автотестов, Page Objects, компонентов, API-клиентов, фикстур, JUnit Extensions, конфигурации и других частей тестовой инфраструктуры основной агент обязан:
+
+1. Завершить реализацию изменений в разрешённых границах задачи.
+2. Выполнить необходимые разрешённые проверки согласно глобальным и проектным правилам. Если запуск тестов не разрешён, провести проверку по коду и указать ограничение.
+3. Запустить отдельного субагента `test-reviewer` для независимого ревью целевого diff. Передать ему границы задачи, базу сравнения, список затронутых файлов, сведения о чужих изменениях и разрешённых проверках. Не изменять проверяемые файлы до получения результата ревью.
+4. Дождаться результата работы `test-reviewer` и проанализировать замечания. Проверить их обоснованность, не исправлять код вслепую.
+5. Исправить подтверждённые нарушения в рамках задачи, не ослабляя действующие правила. После существенных исправлений повторить независимое ревью актуального diff.
+6. Ограничить цикл тремя раундами независимого ревью (первый и не более двух повторных). Если после третьего раунда остаются замечания, требующие исправления, остановиться и сообщить пользователю о них. Не считать код прошедшим ревью при наличии нерешённых замечаний.
+7. В итоговом ответе указать, был ли действительно запущен `test-reviewer`, результаты его ревью, исправленные и оставшиеся замечания, выполненные и невыполненные проверки.
+
+Запрещено подменять независимое ревью самостоятельной проверкой основного агента. Если запуск `test-reviewer` невозможен, явно сообщить об этом пользователю и не заявлять, что независимое ревью выполнено.
+
+Это требование относится только к основному агенту, реализующему изменения. Субагент `test-reviewer` работает только в режиме ревью: не меняет файлы и не запускает других субагентов, включая самого себя. Для консультаций и задач без изменений тестового кода или тестовой инфраструктуры обязательный запуск не требуется; явный запрос пользователя на ревью выполняется отдельно.
+
+---
+
 ## 1. Структура проекта
 
 Проект — **мультипроект Gradle** с тремя подпроектами (`rfr-api`, `rfr-auth`, `rfr-e2e`) и отдельной React SPA (`rfr-gql-client`).
@@ -28,14 +46,14 @@ rfr/
 - **Пакет:** `io.student.rangiffler`
 - **Технологии:** Spring Boot 4.1.1, DGS codegen, Spring GraphQL, Spring Data JPA, Flyway, Lombok, MySQL 8
 - **Структура:**
-  - `config/` — конфигурации (GraphQlExceptionResolver, CorsCustomizer)
-  - `controller/` — GraphQL-контроллеры (User, Country, Feed, Photo)
-  - `data/entity/` — JPA-сущности (User, Country, Friendship)
-  - `data/repository/` — Spring Data репозитории
-  - `service/api/` — бизнес-логика (UserService, CountryService)
-  - `service/mock/` — мок-данные для Feed
-  - `exception/` — пользовательские исключения
-  - `util/` — утилиты (BytesAsString, GqlQueryPaginationAndSort)
+    - `config/` — конфигурации (GraphQlExceptionResolver, CorsCustomizer)
+    - `controller/` — GraphQL-контроллеры (User, Country, Feed, Photo)
+    - `data/entity/` — JPA-сущности (User, Country, Friendship)
+    - `data/repository/` — Spring Data репозитории
+    - `service/api/` — бизнес-логика (UserService, CountryService)
+    - `service/mock/` — мок-данные для Feed
+    - `exception/` — пользовательские исключения
+    - `util/` — утилиты (BytesAsString, GqlQueryPaginationAndSort)
 - **Schema:** `src/main/resources/graphql/query.graphqls`
 - **DB migration:** `src/main/resources/db/migration/rangiffler-api/`
 - **База данных:** MySQL `rangiffler-api` (localhost:3306)
@@ -44,12 +62,12 @@ rfr/
 - **Пакет:** `io.student.rangiffler`
 - **Технологии:** Spring Boot 4.1.1, OAuth2 Authorization Server, Thymeleaf, Spring Data JPA, Flyway, Lombok, MySQL 8
 - **Структура:**
-  - `config/` — Security, AccessTokenCustomizer, ThemeCookieFilter
-  - `controller/` — Login, Register, CustomError
-  - `data/` — UserEntity, AuthorityEntity, UserRepository
-  - `model/` — RegistrationForm
-  - `service/` — UserService, DatabaseUserDetailsService, GlobalExceptionHandler
-  - `validation/` — кастомные валидаторы (EqualPasswords, NoWhitespace)
+    - `config/` — Security, AccessTokenCustomizer, ThemeCookieFilter
+    - `controller/` — Login, Register, CustomError
+    - `data/` — UserEntity, AuthorityEntity, UserRepository
+    - `model/` — RegistrationForm
+    - `service/` — UserService, DatabaseUserDetailsService, GlobalExceptionHandler
+    - `validation/` — кастомные валидаторы (EqualPasswords, NoWhitespace)
 - **Темплейты:** `src/main/resources/templates/{login,register,error}.html`
 - **Статика:** шрифты, изображения, CSS
 - **DB migration:** `src/main/resources/db/migration/rangiffler-auth/`
@@ -59,19 +77,19 @@ rfr/
 - **Пакет:** `io.student.rangiffler`
 - **Технологии:** JUnit Jupiter 6.1.3, Playwright Java 1.63.0, Allure 3, AspectJ
 - **Конфигурация параллелизма:** `src/test/resources/junit-platform.properties`
-  - Параллельное выполнение классов и методов, параллелизм = 3
+    - Параллельное выполнение классов и методов, параллелизм = 3
 
 ### rfr-gql-client (Frontend)
 - **Технологии:** React 19, TypeScript 6, Vite 8, MUI 9, Apollo Client 4, React Router 8
 - **Структура:**
-  - `src/api/` — GraphQL-клиент (Apollo)
-  - `src/pages/` — страницы приложения
-  - `src/components/` — переиспользуемые компоненты
-  - `src/context/` — React Context
-  - `src/hooks/` — кастомные хуки
-  - `src/types/` — TypeScript-типы
-  - `src/utils/` — утилиты
-  - `src/assets/` — статика
+    - `src/api/` — GraphQL-клиент (Apollo)
+    - `src/pages/` — страницы приложения
+    - `src/components/` — переиспользуемые компоненты
+    - `src/context/` — React Context
+    - `src/hooks/` — кастомные хуки
+    - `src/types/` — TypeScript-типы
+    - `src/utils/` — утилиты
+    - `src/assets/` — статика
 - **ESLint:** flat config, strict mode, no unused locals/params
 
 ---

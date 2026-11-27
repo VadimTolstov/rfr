@@ -152,7 +152,7 @@ export const PhotoCard: FC<PhotoCardInterface> = ({photo, onEditClick}) => {
                     >
                         {liked ? <FavoriteRoundedIcon fontSize="small"/> : <FavoriteBorderRoundedIcon fontSize="small"/>}
                     </IconButton>
-                    <Typography variant="body2" sx={{fontWeight: 600}}>
+                    <Typography variant="body2" sx={{fontWeight: 600}} data-test-id="photo-likes">
                         {photo.likes.total} {photo.likes.total === 1 ? "like" : "likes"}
                     </Typography>
                 </Box>

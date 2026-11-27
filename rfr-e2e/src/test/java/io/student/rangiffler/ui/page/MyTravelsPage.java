@@ -10,6 +10,9 @@ import io.student.rangiffler.ui.component.PhotoCard;
 
 import java.util.regex.Pattern;
 
+/**
+ * Encapsulates the travel feed, its country filters and its photo cards.
+ */
 public final class MyTravelsPage {
     public static final String URL = TestConfig.frontUrl() + "/my-travels";
 
@@ -19,8 +22,6 @@ public final class MyTravelsPage {
     private final Locator withFriends;
     private final Locator visitedCountries;
     private final Locator countries;
-    private final Locator chipCountry;
-
 
     public MyTravelsPage(Page page) {
         this.page = page;
@@ -29,7 +30,6 @@ public final class MyTravelsPage {
         withFriends = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("With friends").setExact(true));
         visitedCountries = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^[0-9]+ countr(?:y|ies) visited$")));
         countries = page.getByRole(AriaRole.TOOLTIP);
-        chipCountry = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^Country filter: .+$")));
     }
 
     @Step("Проверить, что отображается {count} карточек фото")
@@ -37,7 +37,6 @@ public final class MyTravelsPage {
         PlaywrightAssertions.assertThat(cards).hasCount(count);
         return this;
     }
-
 
     @Step("Отобразить только мои путешествия")
     public MyTravelsPage clickOnlyMyTravels() {
@@ -88,11 +87,11 @@ public final class MyTravelsPage {
         return this;
     }
 
-    @Step("Открыть карточку с описанием {description}")
-    public PhotoCard card(String description){
-        Locator filter = cards.filter(new Locator.FilterOptions().setHas(
+    @Step("Найти карточку с описанием {description}")
+    public PhotoCard card(String description) {
+        Locator card = cards.filter(new Locator.FilterOptions().setHas(
                 page.getByText(description, new Page.GetByTextOptions().setExact(true))
         ));
-        return new PhotoCard(filter, description);
+        return new PhotoCard(card, description);
     }
 }
