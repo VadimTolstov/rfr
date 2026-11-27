@@ -17,9 +17,11 @@ public final class BrowserOptions implements OptionsFactory {
     }
 
     private NewContextOptions contextOptions() {
+        int width = TestConfig.screenWidth();
+        int height = TestConfig.screenHeight();
         return new NewContextOptions()
                 .setLocale(TestConfig.browserLocale())
-                .setViewportSize(TestConfig.screenWidth(), TestConfig.screenHeight())
-                .setScreenSize(TestConfig.screenWidth(), TestConfig.screenHeight());
+                .setViewportSize(width, height)
+                .setScreenSize(width, height);
     }
 }
