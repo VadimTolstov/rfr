@@ -6,8 +6,10 @@ import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import io.student.rangiffler.config.TestConfig;
+import io.student.rangiffler.data.MockPhoto;
 import io.student.rangiffler.ui.component.PhotoCard;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -35,6 +37,16 @@ public final class MyTravelsPage {
     @Step("Проверить, что отображается {count} карточек фото")
     public MyTravelsPage checkThatCardCount(int count) {
         PlaywrightAssertions.assertThat(cards).hasCount(count);
+        return this;
+    }
+
+    @Step("Проверить страны, описания и изображения карточек путешествий")
+    public MyTravelsPage checkThatCards(List<MockPhoto> photos) {
+        for (MockPhoto photo : photos) {
+            new PhotoCard(page.getByRole(AriaRole.ARTICLE, new Page.GetByRoleOptions()
+                    .setName(photo.country() + " " + photo.description()).setExact(true)), photo.description())
+                    .checkThatImage(photo.image());
+        }
         return this;
     }
 

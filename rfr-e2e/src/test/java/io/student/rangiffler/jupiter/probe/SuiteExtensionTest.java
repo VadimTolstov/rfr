@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -34,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("engine-probe")
 @DisplayName("SuiteExtension")
 class SuiteExtensionTest {
+    private static final String ASSERTION = "rfr.probe.assertionFailure";
+
     @Test
     @DisplayName("beforeSuite вызывается один раз на несколько классов")
     void beforeSuiteRunsOnceForSeveralClasses(@TempDir Path dir) {
@@ -176,6 +181,25 @@ class SuiteExtensionTest {
                 "afterSuite was not called exactly once after beforeSuite failed");
     }
 
+    @ParameterizedTest(name = "parallel = {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("AssertionError подготовки блокирует все классы, а завершение вызывается один раз")
+    void preparationErrorFailsEveryClass(boolean concurrent, @TempDir Path dir) {
+        Journal journal = new Journal(dir.resolve("journal"));
+        Map<String, String> parameters = new HashMap<>(concurrent ? parallel() : Map.of(
+                "junit.jupiter.execution.parallel.enabled", "false"));
+        parameters.put(ASSERTION, "true");
+        EngineExecutionResults results = run(journal, parameters, BrokenBeforeFirst.class, BrokenBeforeSecond.class);
+        assertEquals(2, results.containerEvents().failed().stream()
+                .map(event -> event.getRequiredPayload(TestExecutionResult.class))
+                .flatMap(result -> result.getThrowable().stream())
+                .filter(failure -> failure instanceof AssertionError
+                        && "beforeSuite of BrokenBefore fails on purpose".equals(failure.getMessage()))
+                .count());
+        assertEquals(0, results.testEvents().started().count());
+        assertEquals(List.of("beforeSuite BrokenBefore", "afterSuite BrokenBefore"), journal.events());
+    }
+
     @Test
     @DisplayName("Упавший afterSuite вызывается один раз")
     void failedAfterSuiteIsNotRetried(@TempDir Path dir) {
@@ -211,17 +235,20 @@ class SuiteExtensionTest {
                 "Failed afterSuite of one implementation blocked afterSuite of another");
     }
 
-    @Test
+    @ParameterizedTest(name = "assertion = {0}")
+    @ValueSource(booleans = {false, true})
     @DisplayName("Ошибка beforeSuite прикрепляется к ошибке afterSuite как suppressed")
-    void failedBeforeSuiteIsSuppressedByFailedAfterSuite(@TempDir Path dir) {
-        EngineExecutionResults results = run(new Journal(dir.resolve("journal")), Map.of(), BrokenBothFirst.class);
+    void failedBeforeSuiteIsSuppressedByFailedAfterSuite(boolean assertion, @TempDir Path dir) {
+        EngineExecutionResults results = run(new Journal(dir.resolve("journal")),
+                Map.of(ASSERTION, Boolean.toString(assertion)), BrokenBothFirst.class);
         assertEquals(1L, results.containerEvents().failed().stream()
                         .map(event -> event.getRequiredPayload(TestExecutionResult.class))
                         .flatMap(result -> result.getThrowable().stream())
                         .flatMap(throwable -> Stream.iterate(throwable, cause -> cause != null, Throwable::getCause))
                         .filter(throwable -> "afterSuite of BrokenBoth fails on purpose".equals(throwable.getMessage()))
                         .filter(throwable -> Arrays.stream(throwable.getSuppressed())
-                                .anyMatch(suppressed -> "beforeSuite of BrokenBoth fails on purpose".equals(suppressed.getMessage())))
+                                .anyMatch(suppressed -> "beforeSuite of BrokenBoth fails on purpose".equals(suppressed.getMessage())
+                                        && (!assertion || suppressed instanceof AssertionError)))
                         .count(),
                 "Failed afterSuite did not carry the beforeSuite failure as suppressed");
     }
@@ -247,6 +274,7 @@ class SuiteExtensionTest {
     private EngineExecutionResults run(Journal journal, Map<String, String> parameters, Class<?>... targets) {
         return EngineTestKit.engine("junit-jupiter")
                 .configurationParameter(ProbeTargetCondition.PARAMETER, "true")
+                .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "false")
                 .configurationParameter(Journal.PARAMETER, journal.path().toString())
                 .configurationParameters(parameters)
                 .selectors(Arrays.stream(targets).map(DiscoverySelectors::selectClass).toArray(DiscoverySelector[]::new))
@@ -278,6 +306,13 @@ class SuiteExtensionTest {
                 .filter(throwable -> Stream.iterate(throwable, cause -> cause != null, Throwable::getCause)
                         .anyMatch(cause -> message.equals(cause.getMessage())))
                 .count();
+    }
+
+    private static void reject(ExtensionContext context, String message) {
+        if (context.getConfigurationParameter(ASSERTION, Boolean::parseBoolean).orElse(false)) {
+            throw new AssertionError(message);
+        }
+        throw new IllegalStateException(message);
     }
 
     record Journal(Path path) {
@@ -376,7 +411,7 @@ class SuiteExtensionTest {
         @Override
         public void beforeSuite(ExtensionContext context) {
             new Journal(context).write("beforeSuite BrokenBefore");
-            throw new IllegalStateException("beforeSuite of BrokenBefore fails on purpose");
+            reject(context, "beforeSuite of BrokenBefore fails on purpose");
         }
 
         @Override
@@ -402,13 +437,13 @@ class SuiteExtensionTest {
         @Override
         public void beforeSuite(ExtensionContext context) {
             new Journal(context).write("beforeSuite BrokenBoth");
-            throw new IllegalStateException("beforeSuite of BrokenBoth fails on purpose");
+            reject(context, "beforeSuite of BrokenBoth fails on purpose");
         }
 
         @Override
         public void afterSuite(ExtensionContext context) {
             new Journal(context).write("afterSuite BrokenBoth");
-            throw new IllegalStateException("afterSuite of BrokenBoth fails on purpose");
+            reject(context, "afterSuite of BrokenBoth fails on purpose");
         }
     }
 

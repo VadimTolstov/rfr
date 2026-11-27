@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
+import java.util.regex.Pattern;
 
 /**
  * Encapsulates the controls and counters of a single travel photo.
@@ -36,6 +37,17 @@ public final class PhotoCard {
     public PhotoCard checkThatLikes(String likes) {
         PlaywrightAssertions.assertThat(card.getByTestId("photo-likes"))
                 .hasText(likes);
+        return this;
+    }
+
+    @Step("Проверить изображение и уникальность карточки «{this.description}»")
+    public PhotoCard checkThatImage(String fragment) {
+        PlaywrightAssertions.assertThat(card).hasCount(1);
+        Locator image = card.getByRole(AriaRole.IMG,
+                new Locator.GetByRoleOptions().setName(description).setExact(true));
+        PlaywrightAssertions.assertThat(image).isVisible();
+        // The fixed mock images have distinct Base64 fragments, even when the caption is unchanged.
+        PlaywrightAssertions.assertThat(image).hasAttribute("src", Pattern.compile(fragment.replace("+", "[+]")));
         return this;
     }
 
