@@ -10,15 +10,16 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 ./gradlew :rfr-e2e:installPlaywright
 ./gradlew :rfr-e2e:test
 ./gradlew :rfr-e2e:test --tests '*UserExtensionTest'
-./gradlew :rfr-e2e:test --tests '*RegistrationTest'
-./gradlew e2e
-./gradlew e2e --tests '*TabTest'
+./gradlew :rfr-e2e:e2e --tests '*MyTravelsMockTest'
+./gradlew :rfr-e2e:e2e --tests '*TabTest'
 ./gradlew :rfr-e2e:allureReport
 ```
 
 Отчёт Allure: `rfr-e2e/build/reports/allure-report/allureReport/index.html`.
 
-Задача `:rfr-e2e:test` по умолчанию исключает тесты с тегом `ui`. Если задан фильтр `--tests`, выбранный UI-тест запускается напрямую и требует работающего стенда.
+Задача `:rfr-e2e:test` по умолчанию исключает тесты с тегом `ui`. Фильтр `--tests` позволяет запустить выбранный UI-тест напрямую. Браузерная проба `BrowserDimensionsTest` работает без стенда.
+
+На общей тестовой БД исключай `RegistrationTest` из общих прогонов. Его очистка по `username` может удалить чужие записи.
 
 Задача `e2e` запускает только UI-тесты и включает `rfr.standCheck` и `rfr.migrationCheck`. `StandReadinessExtension` ждёт доступности MySQL, auth, API и фронтенда, затем `StandSchemaExtension` проверяет миграции. Ожидание выполняется внутри Jupiter через `SuiteExtension`; зависимости задачи `e2e` от `waitForStand` больше нет. Расширение не запускает и не перезапускает сервисы.
 
@@ -52,7 +53,7 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `rfr.navigationTimeoutMs` | `RFR_NAVIGATION_TIMEOUT_MS` | `30000` |
 | `rfr.commit` | `RFR_COMMIT` | `unavailable` при запуске вне Gradle |
 
-`dbUrl` задаёт базовый JDBC URL; конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `BrowserOptions` применяет настройки `browser` и `headless`; локаль контекста — `en-US`.
+`dbUrl` задаёт базовый JDBC URL. Конфигурация добавляет к нему схему `rangiffler-auth` или `rangiffler-api` и `?serverTimezone=UTC`. При запуске через Gradle пути миграций по умолчанию передаются в тестовую JVM как абсолютные пути. `BrowserOptions` применяет настройки браузера из `TestConfig`. Ключи `screenWidth` и `screenHeight` задают одну пару размеров для экрана и области просмотра. Для мобильного окна используй `-Drfr.screenWidth=390 -Drfr.screenHeight=844`.
 
 ## Архитектура
 
@@ -62,17 +63,23 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 |---|---|
 | `config` | `TestConfig` |
 | `jupiter` | интеграция с JUnit: `annotation` (`@UiTest`, `@User`, `@ProbeTarget`), `extension` (`BrowserOptions`, `UserExtension`), `condition` (`ProbeTargetCondition`), `probe` (`UserExtensionTest`) |
-| `data` | `TestUser`, `UserRequest`, `UserFixture`, `TearDown`, `SingleUserFixture` и декораторы `UserWithFriendsFixture`, `UserWithIncomeInvitations`, `UserWithOutcomeInvitationsFixture` |
+| `data` | `TestUser`, `UserRequest`, `UserFixture`, `TearDown`, `SingleUserFixture`, `UserWithRelationsFixture`, `Relation` и `StaticUserFixture` |
 | `data.db` | `Databases` с ленивыми Hikari-пулами (максимум четыре соединения на схему), `Jdbc`, модели и операции для профилей, учётных записей и связей |
 | `utils` | `RandomDataUtils` — генерация тестовых имён и паролей |
 | `ui` | `page` — Page Objects, `component` — общие части страниц |
-| `test` | тесты в корневом пакете и по фичам: `auth`, `people`, `profile` |
+| `test` | тесты в корневом пакете и по сценариям `auth`, `people`, `profile`, `travels` и `demo` |
 
 Правила: в `jupiter` нет SQL и локаторов; в `data` нет JUnit; в `test` нет локаторов и SQL; `ThreadLocal` для состояния теста не используется — фикстуры хранятся в Store расширения.
 
+`@User` и `@StaticUser` проверяют типы всех своих параметров до подготовки первой фикстуры. Динамическая фикстура освобождает успешно созданные записи по UUID. Проверка очистки заявки использует отдельный Store отправителя и проверяет состояние после его закрытия. Проба очереди проверяет доступность всех трёх пар одновременно после сбоя.
+
+`MyTravelsMockTest` проверяет состав ленты по ожидаемым странам, описаниям и фрагментам изображений из `MockPhoto`. Карточки проверяются независимо от порядка.
+
+`ExtendWithPlacesTest` через `EngineTestKit` проверяет, что при регистрации на уровне класса `beforeAll` и `afterAll` оборачивают оба теста ровно один раз. Примеры локальной регистрации используют отдельный резолвер параметров без callbacks уровня класса.
+
 ## Агент
 
-При изменении Page Objects следуй `.claude/skills/rfr-page-objects/SKILL.md`. UI-локаторы проверяются в браузере через Playwright MCP.
+При изменении Page Objects следуй `.agents/skills/rfr-page-objects/SKILL.md`. UI-локаторы проверяются в браузере через Playwright MCP.
 
 Подтверждение результата теста — запуск соответствующей Gradle-задачи.
 
@@ -91,11 +98,11 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 
 Общий срок считается по монотонным часам. Попытка ограничена меньшим из оставшегося времени и пяти секунд; отдельно ограничены подключение и HTTP-запрос. Внешний лимит `Future.get` ограничивает также DNS и чтение тела ответа. Между попытками — не больше 200 мс. Сервисы, которые уже ответили, повторно не опрашиваются, как в скрипте. Значение `standTimeout` должно быть положительным целым числом секунд. Прерывание восстанавливает флаг потока и прекращает ожидание; отмена виртуальных потоков не задерживает выход за пределы общего срока.
 
-При истечении срока исключение перечисляет оставшиеся сервисы и команды их запуска. `SuiteRun` сохраняет ошибку в корневом Store; остальные тестовые классы получают ту же ошибку без нового ожидания. Миграции и тела тестов после ошибки готовности не выполняются.
+При истечении срока исключение перечисляет оставшиеся сервисы и команды их запуска. `SuiteRun` сохраняет исходный `RuntimeException` или `Error` в корневом Store. Каждый зависимый класс получает ту же ошибку без повторной подготовки. `afterSuite` вызывается однократно. Если завершение также падает, ошибка подготовки сохраняется в `suppressed`. Миграции и тела тестов после ошибки готовности не выполняются.
 
-### Порядок расширений и обоснование для PR
+### Порядок расширений
 
-Оба расширения зарегистрированы в одном `META-INF/services/org.junit.jupiter.api.extension.Extension`: сначала `StandReadinessExtension`, затем `StandSchemaExtension`. На используемом test classpath `ServiceLoader` обходит имена провайдеров внутри одного файла в порядке строк, Jupiter сохраняет порядок регистрации для before-callbacks. Поэтому каждый класс завершает readiness-callback до вызова schema-callback; синхронизированный `SuiteRun.start()` заставляет параллельные классы дождаться того же результата проверки. При ошибке readiness следующие before-callbacks не вызываются. Гарантия относится к двум провайдерам этого файла, а не к произвольному порядку разных JAR или JPMS-модулей. Порядок дополнительно проверяется тестом через настоящий `ServiceLoader`.
+В одном `META-INF/services/org.junit.jupiter.api.extension.Extension` зарегистрированы четыре расширения в порядке `AllureEnvironmentExtension` → `DatabasePoolsExtension` → `StandReadinessExtension` → `StandSchemaExtension`. Jupiter выполняет before-callbacks в порядке регистрации. Параллельные классы ожидают результат общей подготовки через `SuiteRun`. При ошибке readiness дальнейшие before-callbacks не вызываются. `StandReadinessExtensionTest` проверяет относительный порядок этих четырёх провайдеров через `ServiceLoader`.
 
 Источники: [ServiceLoader — порядок провайдеров](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html), [автоматическая регистрация расширений Jupiter](https://docs.junit.org/6.1.0/extensions/registering-extensions).
 
@@ -114,7 +121,7 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 ```bash
 ./gradlew :rfr-e2e:test --tests '*StandReadinessExtensionTest'
 ./gradlew :rfr-e2e:test
-./gradlew e2e
+./gradlew :rfr-e2e:e2e --tests '*MyTravelsMockTest'
 ```
 
 Проверено 2026-11-11: все пять проверок `StandReadinessExtensionTest`, обычная задача `test` и 16 UI-тестов `e2e` прошли. `check-code.bat` и проверки новых классов в IDEA завершились без ошибок и предупреждений. Итоговый лог Gradle: `build/verification/readiness/final.log`; задачи `waitForStand` в нём нет.
@@ -131,7 +138,7 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 | `migration.rangiffler-auth` | Текущая применённая версия auth-схемы из `Flyway.info().current()` |
 | `migration.rangiffler-api` | Текущая применённая версия API-схемы из `Flyway.info().current()` |
 
-Тестовый Java-код не запускает Git. При переданном вручную `-Drfr.commit=...` Gradle сохраняет это значение. Чтение версий включается только при `rfr.environmentDb=true`; обычный `test` его не включает, `e2e` включает. При выключенном флаге Allure не открывает соединений к MySQL, но сохраняет все восемь ключей и пишет `unavailable` для обеих схем. При включённом флаге версии читаются отдельными подключениями с JDBC `connectTimeout=1000` и `socketTimeout=1000`, без повторных подключений Flyway и без Hikari-пулов фикстур. Если схему прочитать нельзя, записывается `unavailable`; если история не содержит текущей версионной миграции — `none`. Учётные данные в отчёт не попадают. Ошибка записи самого файла выбрасывается, а не скрывается.
+Тестовый Java-код не запускает Git. При переданном вручную `-Drfr.commit=...` Gradle сохраняет это значение. Чтение версий включается только при `rfr.environmentDb=true`. Задача `e2e` включает этот флаг. При выключенном флаге Allure сохраняет все восемь ключей и пишет `unavailable` для обеих схем без подключения к MySQL. При включённом флаге версии читаются отдельными подключениями с JDBC `connectTimeout=1000` и `socketTimeout=1000`, без повторных подключений Flyway и без Hikari-пулов фикстур. Если схему прочитать нельзя, записывается `unavailable`. Если история не содержит текущей версионной миграции, записывается `none`. Ключи `dbUser` и `dbPassword` в файл не записываются. Ошибка записи файла передаётся вызывающей стороне.
 
 ### Почему расширение зарегистрировано первым
 
@@ -141,7 +148,9 @@ E2E-тесты Rangiffler: JUnit Jupiter 6.1.3, Playwright Java 1.63, Allure 3 �
 
 Первая регистрация успевает поместить свой `SuiteRun` в корневой `ExtensionContext.Store` до проверки готовности и миграций. JUnit закрывает Store и вызывает `SuiteRun.close()` даже после ошибки подготовки; тот вызывает `AllureEnvironmentExtension.afterSuite`. Это гарантирует запись и после ошибки другого `beforeSuite`, пока процесс JVM штатно завершает работу JUnit. При аварийном завершении JVM callbacks не гарантируются.
 
-Проверки `EngineTestKit` через мишени `@ProbeTarget`: файл после успешного прогона содержит все восемь ключей; после упавшего `beforeSuite` файл тоже существует, а следующий before-callback не вызван; недоступная MySQL при включённом чтении даёт две версии `unavailable` и не мешает записи. Два дополнительных теста с TCP-счётчиком проверяют ноль подключений по умолчанию и реальные попытки подключения при `environmentDb=true`. В тестах готовности стенда автозагрузка этого расширения исключена для изоляции: получение метаданных не должно добавлять сетевые запросы к измерению таймаута readiness.
+Проверки `EngineTestKit` подтверждают запись `environment.properties` после успешного запуска и сбоя подготовки. Недоступная MySQL при включённом чтении даёт две версии `unavailable`. Проверка значения по умолчанию выполняется в отдельной JVM. Пробы с явными `false` и `true` используют локальный TCP-счётчик и проверяют, что свойства родительской JVM сохранились. В отдельных тестах readiness метаданные Allure исключены из измерения таймаута.
+
+Раздел описывает содержимое `environment.properties`. Пароли синтетических пользователей и OAuth-данные могут попадать в шаги и браузерные артефакты текущей интеграции. Исправление этого риска отложено.
 
 ```bash
 ./gradlew :rfr-e2e:test --tests '*AllureEnvironmentExtensionTest'

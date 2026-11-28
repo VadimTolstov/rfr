@@ -5,6 +5,7 @@ import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.ui.page.LoginPage;
 import io.student.rangiffler.ui.page.MyTravelsPage;
 
+/** Opens the travel feed after signing in through the browser. */
 final class TravelsLogin {
 
     static MyTravelsPage open(Page page, TestUser user) {
