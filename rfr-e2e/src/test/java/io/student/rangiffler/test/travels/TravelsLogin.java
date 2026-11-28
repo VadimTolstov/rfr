@@ -9,11 +9,12 @@ import io.student.rangiffler.ui.page.MyTravelsPage;
 final class TravelsLogin {
 
     static MyTravelsPage open(Page page, TestUser user) {
-        return new LoginPage(page)
+        new LoginPage(page)
                 .open()
                 .clickLogin()
                 .fillLoginForm(user.username(), user.password())
-                .clickSignIn()
-                .clickMyMap();
+                .clickSignIn();
+        page.waitForURL(MyTravelsPage.URL);
+        return new MyTravelsPage(page);
     }
 }
