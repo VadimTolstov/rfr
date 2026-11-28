@@ -27,6 +27,7 @@ import org.junit.jupiter.api.extension.TestInstanceFactoryContext;
 import org.junit.jupiter.api.extension.TestInstancePreConstructCallback;
 import org.junit.jupiter.api.extension.TestInstancePreDestroyCallback;
 
+/** Demonstrates callback and interception order when registered for a test class. */
 public final class DemoExtension implements
         BeforeAllCallback,
         BeforeClassTemplateInvocationCallback,
@@ -41,6 +42,7 @@ public final class DemoExtension implements
         PreInterruptCallback,
         InvocationInterceptor,
         ParameterResolver {
+    private static final String VALUE = "resolved by DemoExtension";
     private static final AtomicInteger COUNTER = new AtomicInteger();
     private static final Set<String> SHOWN = ConcurrentHashMap.newKeySet();
 
@@ -59,6 +61,7 @@ public final class DemoExtension implements
     @Override
     public void beforeAll(ExtensionContext context) {
         log("beforeAll", context);
+        context.publishReportEntry("demo.lifecycle", "beforeAll");
     }
 
     @Override
@@ -104,6 +107,7 @@ public final class DemoExtension implements
     @Override
     public void afterAll(ExtensionContext context) {
         log("afterAll", context);
+        context.publishReportEntry("demo.lifecycle", "afterAll");
     }
 
     @Override
@@ -179,7 +183,7 @@ public final class DemoExtension implements
     @Override
     public String resolveParameter(ParameterContext parameter, ExtensionContext context) {
         log("resolveParameter " + parameter.getDeclaringExecutable().getName() + "#" + parameter.getIndex(), context);
-        return "resolved by DemoExtension";
+        return VALUE;
     }
 
     private void log(String callback, ExtensionContext context) {
@@ -199,6 +203,19 @@ public final class DemoExtension implements
                 System.out.printf("%s• DemoExtension#%d created%n", "  ".repeat(depth), id);
             }
             System.out.printf("%s· DemoExtension#%d %s%n", "  ".repeat(depth), id, callback);
+        }
+    }
+
+    /** Demonstrates narrow parameter resolution without class lifecycle callbacks. */
+    public static final class Parameters implements ParameterResolver {
+        @Override
+        public boolean supportsParameter(ParameterContext parameter, ExtensionContext context) {
+            return parameter.getParameter().getType() == String.class;
+        }
+
+        @Override
+        public String resolveParameter(ParameterContext parameter, ExtensionContext context) {
+            return VALUE;
         }
     }
 }

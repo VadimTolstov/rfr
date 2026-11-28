@@ -65,11 +65,37 @@ public final class TestConfig {
     return Boolean.parseBoolean(value("headless", "true"));
   }
 
+  public static String testIdAttribute() {
+    return value("testIdAttribute", "data-test-id");
+  }
+
+  public static String browserLocale() {
+    return value("browserLocale", "en-US");
+  }
+
+  public static int screenWidth() {
+    return Integer.parseInt(value("screenWidth", "1920"));
+  }
+
+  public static int screenHeight() {
+    return Integer.parseInt(value("screenHeight", "1080"));
+  }
+
+  public static int actionTimeoutMs() {
+    return Integer.parseInt(value("actionTimeoutMs", "5000"));
+  }
+
+  public static int navigationTimeoutMs() {
+    return Integer.parseInt(value("navigationTimeoutMs", "30000"));
+  }
+
   public static String commit() {
     return value("commit", "unavailable");
   }
 
-  static String value(String key, String fallback) {
+
+
+    static String value(String key, String fallback) {
     String property = System.getProperty("rfr." + key);
     if (property != null && !property.isBlank()) {
       return property;

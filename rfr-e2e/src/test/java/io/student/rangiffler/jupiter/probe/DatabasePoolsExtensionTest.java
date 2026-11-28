@@ -2,9 +2,12 @@ package io.student.rangiffler.jupiter.probe;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.student.rangiffler.data.db.Databases;
+import io.student.rangiffler.data.TestUser;
 import io.student.rangiffler.jupiter.annotation.ProbeTarget;
+import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.jupiter.condition.ProbeTargetCondition;
 import io.student.rangiffler.jupiter.extension.DatabasePoolsExtension;
+import io.student.rangiffler.jupiter.extension.UserExtension;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -12,11 +15,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 import org.junit.platform.testkit.engine.EngineTestKit;
@@ -46,7 +51,7 @@ final class DatabasePoolsExtensionTest {
                     .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "false")
                     .configurationParameter("junit.jupiter.execution.parallel.enabled", "false")
                     .execute();
-            assertEquals(6, results.testEvents().succeeded().count(),
+            assertEquals(7, results.testEvents().succeeded().count(),
                     () -> results.allEvents().failed().list().toString());
         } finally {
             thread.setContextClassLoader(parent);
@@ -98,6 +103,18 @@ final class DatabasePoolsExtensionTest {
         }
 
         @Test
+        void invalidUserParametersFailBeforeAllocatingAnyDatabasePool() {
+            EngineExecutionResults results = run(UserParametersTarget.class);
+            assertEquals(0, results.containerEvents().failed().count());
+            assertEquals(1, results.testEvents().succeeded().count());
+            assertEquals(2, results.testEvents().failed().stream()
+                    .map(event -> event.getRequiredPayload(TestExecutionResult.class).getThrowable().orElseThrow())
+                    .map(failure -> assertInstanceOf(ParameterResolutionException.class, failure))
+                    .filter(failure -> failure.getMessage().endsWith("must have type TestUser"))
+                    .count());
+        }
+
+        @Test
         void keepsPoolsOpenAfterNestedRunUntilOuterRunEnds() {
             EngineExecutionResults results = run(NestedTargetTest.class);
             assertEquals(1, results.testEvents().succeeded().count(), () -> results.testEvents().failed().list().toString());
@@ -128,14 +145,14 @@ final class DatabasePoolsExtensionTest {
                 var second = executor.submit(() -> run(SecondConcurrentTargetTest.class));
                 assertTrue(pair.entered().await(10, TimeUnit.SECONDS));
                 Pools pools = OBSERVED.get();
-                pair.first().countDown();
+                pair.releaseFirst().countDown();
                 assertEquals(1, first.get(10, TimeUnit.SECONDS).testEvents().succeeded().count());
                 pools.checkOpen();
                 pair.second().countDown();
                 assertEquals(1, second.get(10, TimeUnit.SECONDS).testEvents().succeeded().count());
                 pools.checkClosed();
             } finally {
-                pair.first().countDown();
+                pair.releaseFirst().countDown();
                 pair.second().countDown();
                 executor.shutdownNow();
             }
@@ -160,6 +177,31 @@ final class DatabasePoolsExtensionTest {
     private static Pools pools() {
         return new Pools(assertInstanceOf(HikariDataSource.class, Databases.AUTH.dataSource()),
                 assertInstanceOf(HikariDataSource.class, Databases.API.dataSource()));
+    }
+
+    /** Observes pool allocation before the nested root can release its lease. */
+    @ProbeTarget
+    @ExtendWith(UserExtension.class)
+    static final class UserParametersTarget {
+        @Test
+        void withoutUser() {
+            checkNoPools();
+        }
+
+        @Test
+        void wrongType(@User String invalid) {
+            throw new AssertionError("Invalid User parameter reached the test");
+        }
+
+        @Test
+        void wrongTypeAfterValid(@User TestUser valid, @User String invalid) {
+            throw new AssertionError("Invalid User signature reached the test");
+        }
+
+        @AfterAll
+        static void checkPoolsBeforeRootCloses() {
+            checkNoPools();
+        }
     }
 
     private static void assertFailure(Events failures, String message) {
@@ -194,7 +236,7 @@ final class DatabasePoolsExtensionTest {
     }
 
     /** Makes two root contexts overlap until the observing test releases them in order. */
-    private record Pair(CountDownLatch entered, CountDownLatch first, CountDownLatch second) {
+    private record Pair(CountDownLatch entered, CountDownLatch releaseFirst, CountDownLatch second) {
         void hold(CountDownLatch release) throws InterruptedException {
             OBSERVED.set(pools());
             entered.countDown();
@@ -268,7 +310,7 @@ final class DatabasePoolsExtensionTest {
         @Test
         void holdsPools() throws InterruptedException {
             Pair pair = ACTIVE.get();
-            pair.hold(pair.first());
+            pair.hold(pair.releaseFirst());
         }
     }
 

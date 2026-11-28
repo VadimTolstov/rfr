@@ -1,19 +1,34 @@
 package io.student.rangiffler.data.db;
 
+import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /** Creates and checks the AUTH account and its required authorities. */
 public record AuthAccount(String username, String password) {
   public void create() {
-    String encodedPassword = "{bcrypt}" + new BCryptPasswordEncoder().encode(password);
+    create(UUID.randomUUID());
+  }
+
+  public void create(UUID id) {
+    String encoded = "{bcrypt}" + new BCryptPasswordEncoder().encode(password);
     Jdbc.inTransaction(Databases.AUTH, jdbc -> {
       Jdbc.requireOneRow(jdbc.sql(Jdbc.loadSql("sql/auth/insert_user.sql"))
+          .param("id", id.toString())
           .param("username", username)
-          .param("password", encodedPassword)
+          .param("password", encoded)
           .update(), "AUTH user");
       createAuthority(jdbc, "read");
       createAuthority(jdbc, "write");
+    });
+  }
+
+  public void delete(UUID id) {
+    Jdbc.inTransaction(Databases.AUTH, jdbc -> {
+      jdbc.sql("DELETE FROM authority WHERE user_id = UUID_TO_BIN(:id, TRUE)")
+          .param("id", id.toString()).update();
+      jdbc.sql("DELETE FROM `user` WHERE id = UUID_TO_BIN(:id, TRUE)")
+          .param("id", id.toString()).update();
     });
   }
 
@@ -41,4 +56,5 @@ public record AuthAccount(String username, String password) {
         .param("authority", authority)
         .update(), "AUTH authority " + authority);
   }
+
 }

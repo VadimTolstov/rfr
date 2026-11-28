@@ -31,6 +31,7 @@ dependencies {
     testImplementation "com.microsoft.playwright:playwright:$playwrightVersion"
 
     testImplementation "org.springframework:spring-jdbc"
+    testImplementation "org.apache.httpcomponents.client5:httpclient5"
     testImplementation "org.springframework.security:spring-security-crypto"
     testImplementation "org.flywaydb:flyway-core:$flywayVersion"
     testRuntimeOnly "org.flywaydb:flyway-mysql:$flywayVersion"
@@ -124,4 +125,12 @@ tasks.register('installPlaywrightWithDeps', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     args = ['install', '--with-deps', 'chromium']
+}
+
+tasks.register('showTrace', JavaExec) {
+    description = 'Opens a Playwright trace in TraceViewer: -Ptrace=<path to trace.zip>'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    argumentProviders.add({ ['show-trace', gradle.startParameter.currentDir.toPath()
+            .resolve(providers.gradleProperty('trace').get()).toString()] } as CommandLineArgumentProvider)
 }

@@ -15,6 +15,7 @@ public final class MainPage {
   private final Locator travelsMap;
   private final Locator profileLink;
   private final Locator peopleLink;
+  private final Locator mapLink;
 
   public MainPage(Page page) {
     this.page = page;
@@ -22,6 +23,7 @@ public final class MainPage {
     profileLink = page.getByRole(AriaRole.BANNER)
         .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Profile").setExact(true));
     peopleLink = page.getByRole(AriaRole.LINK, new GetByRoleOptions().setName("People").setExact(true));
+    mapLink = page.getByRole(AriaRole.LINK, new GetByRoleOptions().setName("My map").setExact(true));
   }
 
   @Step("Проверить, что карта путешествий отображается")
@@ -41,4 +43,10 @@ public final class MainPage {
     peopleLink.click();
     return new PeoplePage(page);
   }
+
+    @Step("Открыть список карт")
+    public  MyTravelsPage clickMyMap() {
+        mapLink.click();
+        return new MyTravelsPage(page);
+    }
 }

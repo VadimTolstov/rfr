@@ -5,7 +5,7 @@ import io.student.rangiffler.data.UserFixture;
 import io.student.rangiffler.jupiter.annotation.User;
 import io.student.rangiffler.data.UserRequest;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.util.List;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -19,16 +19,15 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
     public void beforeEach(ExtensionContext context) {
         Method method = context.getTestMethod()
                 .orElseThrow(() -> new ParameterResolutionException("Test method was not found for " + context.getDisplayName()));
-        Parameter[] parameters = method.getParameters();
+        List<Integer> indexes = UserParameters.indexes(method, User.class);
+        if (indexes.isEmpty()) {
+            return;
+        }
         ExtensionContext.Store store = context.getStore(NAMESPACE);
-        for (int index = 0; index < parameters.length; index++) {
-            Parameter parameter = parameters[index];
-            if (parameter.isAnnotationPresent(User.class)) {
-                String key = storeKey(context, index);
-                if (store.get(key) != null) {
-                    continue;
-                }
-                User annotation = parameter.getAnnotation(User.class);
+        for (int index : indexes) {
+            String key = storeKey(context, index);
+            if (store.get(key) == null) {
+                User annotation = method.getParameters()[index].getAnnotation(User.class);
                 UserFixture fixture = new UserRequest(annotation).fixture();
                 store.put(key, fixture);
                 fixture.create();
@@ -38,8 +37,7 @@ public final class UserExtension implements BeforeEachCallback, ParameterResolve
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        return parameterContext.getParameter().getType().equals(TestUser.class)
-                && parameterContext.isAnnotated(User.class)
+        return UserParameters.supported(parameterContext.getParameter(), User.class)
                 && extensionContext.getTestMethod().filter(parameterContext.getDeclaringExecutable()::equals).isPresent();
     }
 

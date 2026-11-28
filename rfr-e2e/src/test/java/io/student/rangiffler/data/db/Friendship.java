@@ -1,12 +1,25 @@
 package io.student.rangiffler.data.db;
 
+import java.util.UUID;
+
 /** Creates and checks one accepted friendship or pending invitation. */
 public record Friendship(String requester, String addressee, FriendshipStatus status) {
   public void create() {
+    create(UUID.randomUUID());
+  }
+
+  public void create(UUID id) {
     Jdbc.inTransaction(Databases.API, jdbc -> Jdbc.requireOneRow(jdbc.sql(Jdbc.loadSql(insertSql()))
+        .param("id", id.toString())
         .param("requesterUsername", requester)
         .param("addresseeUsername", addressee)
         .update(), "API " + status.name().toLowerCase()));
+  }
+
+  public void delete(UUID id) {
+    Jdbc.inTransaction(Databases.API, jdbc -> jdbc.sql("DELETE FROM friendship WHERE id = UUID_TO_BIN(:id, TRUE)")
+        .param("id", id.toString())
+        .update());
   }
 
   public void delete() {
